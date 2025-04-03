@@ -307,15 +307,37 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
         Math.round((containerRef.current.clientWidth / 2) - 112) : 0; // center the image
       const centerY = containerRef.current ? 
         Math.round((containerRef.current.clientHeight / 2) - 127) : 0;
-        
-      // Upload to the server
-      uploadPhotoMutation.mutate({
+      
+      // Create a new photo object
+      const newPhoto: DraggablePhoto = {
+        id: Date.now(), // Temporary ID until server response
         src: imageUrl,
         x: centerX,
         y: centerY,
         rotation: Math.round(Math.random() * 10 - 5),
         zIndex: maxZIndex + 1,
         comment: newPhotoComment || 'This is my photo!'
+      };
+      
+      // Add the photo to the UI immediately for better user experience
+      setPhotos(prev => [...prev, newPhoto]);
+        
+      // Upload to the server
+      uploadPhotoMutation.mutate({
+        src: imageUrl,
+        x: centerX,
+        y: centerY,
+        rotation: newPhoto.rotation,
+        zIndex: newPhoto.zIndex,
+        comment: newPhoto.comment
+      }, {
+        onError: (error) => {
+          console.error('Error uploading photo:', error);
+          alert('Failed to upload photo. Please try again with a smaller image.');
+          
+          // Remove the temporary photo if upload fails
+          setPhotos(prev => prev.filter(p => p.id !== newPhoto.id));
+        }
       });
       
       // Close the upload form and reset state
