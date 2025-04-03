@@ -31,7 +31,8 @@ interface TimeCapsuleResponse {
   message: TimeCapsuleMessage;
 }
 
-const messageSchema = z.object({
+// Form schema with both fields needed for the form
+const formSchema = z.object({
   hour: z.number()
     .min(0, { message: "Hour must be at least 0" })
     .max(23, { message: "Hour must be at most 23" }),
@@ -41,7 +42,7 @@ const messageSchema = z.object({
   authorName: z.string().optional()
 });
 
-type MessageFormData = z.infer<typeof messageSchema>;
+type FormData = z.infer<typeof formSchema>;
 
 const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
   const { toast } = useToast();
@@ -54,8 +55,8 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
     refetchOnWindowFocus: false,
   });
   
-  const form = useForm<MessageFormData>({
-    resolver: zodResolver(messageSchema),
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       hour: currentHour,
       message: "",
@@ -64,12 +65,19 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
   });
 
   const messageMutation = useMutation({
-    mutationFn: async (data: MessageFormData) => {
-      return apiRequest('POST', '/api/time-capsule-messages', {
-        hour: data.hour,
-        message: data.authorName 
-          ? `${data.message} - from ${data.authorName}`
-          : data.message
+    mutationFn: async (data: FormData) => {
+      // Combine the message and author name
+      const finalMessage = data.authorName && data.authorName.trim() !== "" 
+        ? `${data.message} - from ${data.authorName}` 
+        : data.message;
+      
+      // Send only hour and message to match database schema
+      return apiRequest('/api/time-capsule-messages', {
+        method: 'POST',
+        body: {
+          hour: data.hour,
+          message: finalMessage
+        }
       });
     },
     onSuccess: async () => {
@@ -95,7 +103,7 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
     }
   });
 
-  const onSubmit = (data: MessageFormData) => {
+  const onSubmit = (data: FormData) => {
     messageMutation.mutate(data);
   };
   

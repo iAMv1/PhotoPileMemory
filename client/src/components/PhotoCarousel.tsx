@@ -628,12 +628,12 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
               {/* Graph paper pattern background */}
               <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
                 {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={`col-${i}`} className="border-r border-blue-200"></div>
+                  <div key={`photo-col-${photo.id}-${i}`} className="border-r border-blue-200"></div>
                 ))}
               </div>
               <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
                 {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={`row-${i}`} className="border-b border-blue-200"></div>
+                  <div key={`photo-row-${photo.id}-${i}`} className="border-b border-blue-200"></div>
                 ))}
               </div>
               
@@ -661,29 +661,7 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
         ))}
       </motion.div>
       
-      {/* Slideshow Navigation */}
-      {isSlideshow && (
-        <div className="mt-4 flex justify-center gap-4">
-          <button 
-            onClick={goToPrevPhoto} 
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full"
-          >
-            <SkipBack size={24} />
-          </button>
-          <button 
-            onClick={toggleSlideshow} 
-            className="p-2 bg-red-100 hover:bg-red-200 rounded-full"
-          >
-            <X size={24} />
-          </button>
-          <button 
-            onClick={goToNextPhoto} 
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full"
-          >
-            <SkipForward size={24} />
-          </button>
-        </div>
-      )}
+      {/* Slideshow Navigation buttons removed as requested */}
     </div>
   );
 };

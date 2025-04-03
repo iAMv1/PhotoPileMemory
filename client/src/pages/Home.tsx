@@ -197,7 +197,7 @@ const Home = () => {
                   </div>
                   
                   <p className="handwritten text-gray-700 mb-3 relative z-10">
-                    Enjoy your special day! Add birthday wishes in the form below and check your time capsule messages throughout the day!
+                    Enjoy your special day!
                   </p>
                   
                   <div className="flex justify-between mb-3">

@@ -25,13 +25,13 @@ import {
 
 const formSchema = z.object({
   text: z.string().min(1, { message: "Write something, duh!" }).max(100, { message: "Too long! Nobody wants to read your novel." }),
-  name: z.string().optional(),
+  name: z.string().optional().default("anoni hea koi"),
   style: z.string().min(1, { message: "Pick a style, any style!" }),
   topPosition: z.number().int().min(0).max(100),
   leftPosition: z.number().int().min(0).max(100),
   rotation: z.number().int().min(-10).max(10),
   fontSize: z.string(),
-  shape: z.string().optional()
+  shape: z.string().default("square")
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -59,7 +59,10 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
   
   const wishMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return apiRequest('POST', '/api/wishes', data);
+      return apiRequest('/api/wishes', {
+        method: 'POST',
+        body: data
+      });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['/api/wishes'] });
