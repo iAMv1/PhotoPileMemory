@@ -109,11 +109,8 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
       data.fontSize = sizes[Math.floor(Math.random() * sizes.length)];
     }
     
-    // Assign random shape if not specified
-    if (!data.shape) {
-      const shapeIds = NOTE_SHAPES.map(shape => shape.id);
-      data.shape = shapeIds[Math.floor(Math.random() * shapeIds.length)];
-    }
+    // Always use square shape
+    data.shape = "square";
     
     wishMutation.mutate(data);
   };
@@ -175,61 +172,32 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
                   )}
                 />
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="style"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
-                              <SelectValue placeholder="handwriting style..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {WISH_STYLES.map((style) => (
-                              <SelectItem key={style.id} value={style.id}>
-                                {style.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-red-500" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="shape"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
-                              <SelectValue placeholder="note shape..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {NOTE_SHAPES.map((shape) => (
-                              <SelectItem key={shape.id} value={shape.id}>
-                                {shape.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-red-500" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="style"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
+                            <SelectValue placeholder="handwriting style..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {WISH_STYLES.map((style) => (
+                            <SelectItem key={style.id} value={style.id}>
+                              {style.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
                 
                 <Button 
                   type="submit" 
