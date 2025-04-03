@@ -1,14 +1,5 @@
 // Photo sources for the image stack
-export const PHOTOS = [
-  "https://images.unsplash.com/photo-1519682577862-22b62b24e493?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1587301669187-732ea66e7617?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1519671482486-5ca6759623b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1513151233558-d860c5398176?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1578922846525-863a0f48811f?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1532117182044-9755a5ca5d55?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80",
-  "https://images.unsplash.com/photo-1464349153735-7db50ed83c84?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&h=300&q=80"
-];
+export const PHOTOS: string[] = [];
 
 // Default time capsule messages
 export const DEFAULT_TIME_CAPSULE_MESSAGES = [
