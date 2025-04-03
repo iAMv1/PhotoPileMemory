@@ -85,23 +85,7 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
       
-      // Start with default photos
-      const initialPhotos = PHOTOS.map((src, index) => {
-        const randomX = Math.floor(Math.random() * (containerWidth - 200));
-        const randomY = Math.floor(Math.random() * (containerHeight - 200));
-        const randomRotation = Math.floor(Math.random() * 30) - 15;
-        
-        return {
-          id: index,
-          src,
-          x: randomX,
-          y: randomY,
-          rotation: randomRotation,
-          zIndex: index + 1
-        };
-      });
-      
-      // Add user photos from the database if available
+      // Only show user photos from the database
       if (userPhotosData && userPhotosData.photos.length > 0) {
         const userPhotos = userPhotosData.photos.map(photo => ({
           id: photo.id,
@@ -112,11 +96,9 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
           zIndex: photo.zIndex,
           isUserAdded: true
         }));
-        
-        // Combine default photos with user photos
-        setPhotos([...initialPhotos, ...userPhotos]);
+        setPhotos(userPhotos);
       } else {
-        setPhotos(initialPhotos);
+        setPhotos([]);
       }
     }
   }, [userPhotosData]);

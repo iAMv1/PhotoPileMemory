@@ -44,45 +44,10 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
 
   // If no server wishes are available, use some default wishes
   useEffect(() => {
-    if (!isLoading && (!wishes || wishes.length === 0)) {
-      const defaultWishes = [
-        {
-          id: 1,
-          text: "Remember when we wrote notes in class? Yeah, you're that old. 🎂",
-          name: "Birthday Buddy",
-          style: "comic",
-          shape: "square",
-          topPosition: 20,
-          leftPosition: 10,
-          rotation: -5,
-          fontSize: "1.25rem"
-        },
-        {
-          id: 2,
-          text: "TIME KEEPS MOVING AND SO DOES YOUR HAIRLINE 👴",
-          name: "anoni hea koi",
-          style: "impact",
-          shape: "square",
-          topPosition: 50,
-          leftPosition: 60,
-          rotation: 3,
-          fontSize: "2rem"
-        },
-        {
-          id: 3,
-          text: "01001000 01000001 01010000 01010000 01011001 00100000 01000010 01001001 01010010 01010100 01001000 01000100 01000001 01011001 00100000 01001110 01000101 01010010 01000100",
-          name: "Tech Friend",
-          style: "retro",
-          shape: "square",
-          topPosition: 70,
-          leftPosition: 30,
-          rotation: -7,
-          fontSize: "1rem"
-        }
-      ];
-      setWishes(defaultWishes);
+    if (data?.wishes) {
+      setWishes(data.wishes);
     }
-  }, [isLoading, wishes]);
+  }, [isLoading, data]);
 
   const getStyleProps = (styleId: string) => {
     const style = WISH_STYLES.find(s => s.id === styleId);
