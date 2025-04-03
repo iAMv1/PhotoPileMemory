@@ -1,6 +1,12 @@
-import { FC, useState, useRef, useEffect } from 'react';
+import { FC, useState, useRef, useEffect, ChangeEvent } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { PHOTOS } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { Play, SkipBack, SkipForward, Upload, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 
 interface PhotoCarouselProps {
   isDeepFried: boolean;
@@ -14,16 +20,50 @@ interface DraggablePhoto {
   y: number;
   rotation: number;
   zIndex: number;
+  comment?: string;
 }
 
 const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [photos, setPhotos] = useState<DraggablePhoto[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const controls = useAnimation();
+  const [isSlideshow, setIsSlideshow] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [newPhotoComment, setNewPhotoComment] = useState('');
   
-  // Initialize photos with random positions
+  // Query to fetch user uploaded photos
+  const { data: userPhotosData, isLoading } = useQuery({
+    queryKey: ['/api/user-photos'],
+    queryFn: async () => {
+      return await apiRequest<{ photos: DraggablePhoto[] }>('/api/user-photos');
+    },
+  });
+
+  // Mutation to upload a new photo
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (photoData: {
+      src: string;
+      x: number;
+      y: number;
+      rotation: number;
+      zIndex: number;
+      comment?: string;
+    }) => {
+      return await apiRequest('/api/user-photos', {
+        method: 'POST',
+        body: photoData,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user-photos'] });
+    },
+  });
+
+  // Initialize photos with both predefined and user-uploaded ones
   useEffect(() => {
+    // Start with predefined photos
     const initialPhotos = PHOTOS.map((src, index) => ({
       id: index + 1,
       src,
@@ -33,8 +73,17 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
       zIndex: index + 1
     }));
     
-    setPhotos(initialPhotos);
-  }, []);
+    // Add user uploaded photos if available
+    if (userPhotosData?.photos?.length) {
+      const allPhotos = [
+        ...initialPhotos,
+        ...userPhotosData.photos
+      ];
+      setPhotos(allPhotos);
+    } else {
+      setPhotos(initialPhotos);
+    }
+  }, [userPhotosData?.photos]);
   
   // Handle drag start to bring photo to front
   const handleDragStart = (index: number) => {
@@ -99,6 +148,100 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
     setPhotos([...photos, newPhoto]);
   };
   
+  // Handle file upload button click
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Process the uploaded file
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      // Check if it's an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file.');
+        return;
+      }
+      
+      // Convert the file to a base64 string
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          setShowUploadForm(true);
+          
+          // Handle the image upload in a separate step to let the user add a comment
+          const imageUrl = event.target.result as string;
+          
+          // Save the image URL to state so we can access it when the form is submitted
+          localStorage.setItem('tempImageUpload', imageUrl);
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Add the user's uploaded photo with comment
+  const addUserPhoto = () => {
+    const imageUrl = localStorage.getItem('tempImageUpload');
+    
+    if (imageUrl) {
+      const maxZIndex = Math.max(...photos.map(photo => photo.zIndex), 0);
+      
+      const centerX = containerRef.current ? 
+        Math.round((containerRef.current.clientWidth / 2) - 112) : 0; // center the image
+      const centerY = containerRef.current ? 
+        Math.round((containerRef.current.clientHeight / 2) - 127) : 0;
+        
+      // Upload to the server
+      uploadPhotoMutation.mutate({
+        src: imageUrl,
+        x: centerX,
+        y: centerY,
+        rotation: Math.round(Math.random() * 10 - 5),
+        zIndex: maxZIndex + 1,
+        comment: newPhotoComment || 'This is my photo!'
+      });
+      
+      // Close the upload form and reset state
+      setShowUploadForm(false);
+      setNewPhotoComment('');
+      localStorage.removeItem('tempImageUpload');
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Toggle slideshow mode
+  const toggleSlideshow = () => {
+    // When entering slideshow mode, center all photos
+    if (!isSlideshow) {
+      // Stack all photos in the center
+      const centerX = containerRef.current ? 
+        (containerRef.current.clientWidth / 2) - 112 : 0;
+      const centerY = containerRef.current ? 
+        (containerRef.current.clientHeight / 2) - 127 : 0;
+        
+      const updatedPhotos = photos.map(photo => ({
+        ...photo,
+        x: centerX,
+        y: centerY,
+      }));
+      
+      setPhotos(updatedPhotos);
+    }
+    
+    setIsSlideshow(!isSlideshow);
+  };
+  
   // Handle clicking on a photo
   const handlePhotoClick = (index: number) => {
     // Bring to front
@@ -108,15 +251,31 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
     setPhotos(updatedPhotos);
   };
   
+  // Set up automatic slideshow interval
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    
+    if (isSlideshow) {
+      interval = setInterval(() => {
+        goToNextPhoto();
+      }, 3000); // Change slide every 3 seconds
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSlideshow, currentPhotoIndex]);
+
   return (
     <div className="my-6 relative">
       {/* Carousel Controls */}
-      <div className="flex justify-between mb-2 px-4">
+      <div className="flex flex-wrap justify-center gap-2 mb-2 px-4">
         <button 
           onClick={goToPrevPhoto}
           className="px-4 py-2 handwritten bg-blue-100 hover:bg-blue-200 text-blue-800 rounded shadow"
         >
-          ← Previous
+          <SkipBack className="inline-block mr-1" size={16} />
+          Previous
         </button>
         
         <button 
@@ -127,19 +286,37 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
         </button>
         
         <button 
-          onClick={addRandomPhoto}
+          onClick={() => setShowUploadForm(true)}
           className="px-4 py-2 handwritten bg-green-100 hover:bg-green-200 text-green-800 rounded shadow"
         >
+          <Upload className="inline-block mr-1" size={16} />
           Add Photo
+        </button>
+        
+        <button 
+          onClick={toggleSlideshow}
+          className={`px-4 py-2 handwritten ${isSlideshow ? 'bg-purple-200 text-purple-800' : 'bg-purple-100 text-purple-800'} hover:bg-purple-200 rounded shadow`}
+        >
+          <Play className="inline-block mr-1" size={16} />
+          {isSlideshow ? 'Exit Slideshow' : 'Slideshow'}
         </button>
         
         <button 
           onClick={goToNextPhoto}
           className="px-4 py-2 handwritten bg-blue-100 hover:bg-blue-200 text-blue-800 rounded shadow"
         >
-          Next →
+          Next <SkipForward className="inline-block ml-1" size={16} />
         </button>
       </div>
+      
+      {/* Hidden file input */}
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
       
       {/* Photo Container */}
       <motion.div 
@@ -181,6 +358,73 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
           ))}
         </div>
         
+        {/* Upload Form Modal */}
+        {showUploadForm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-80 border-2 border-blue-100 relative">
+              {/* Graph paper background */}
+              <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div key={`modal-col-${i}`} className="border-r border-blue-300"></div>
+                ))}
+              </div>
+              <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div key={`modal-row-${i}`} className="border-b border-blue-300"></div>
+                ))}
+              </div>
+              
+              <div className="relative z-10">
+                <button 
+                  onClick={() => setShowUploadForm(false)}
+                  className="absolute top-0 right-0 text-gray-500 hover:text-gray-700"
+                >
+                  <X size={20} />
+                </button>
+                
+                <h3 className="text-xl font-bold mb-4 handwritten text-blue-800">Add Your Photo</h3>
+                
+                <div className="mb-4">
+                  <Button 
+                    onClick={handleUploadClick}
+                    className="w-full handwritten bg-green-100 hover:bg-green-200 text-green-800 mb-4"
+                  >
+                    <Upload className="mr-2" size={16} />
+                    Choose Photo
+                  </Button>
+                  
+                  <label className="block text-sm handwritten font-medium text-gray-700 mb-1">
+                    Add a comment:
+                  </label>
+                  <Textarea
+                    value={newPhotoComment}
+                    onChange={(e) => setNewPhotoComment(e.target.value)}
+                    placeholder="Write something funny..."
+                    className="handwritten-messy"
+                    rows={3}
+                  />
+                </div>
+                
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowUploadForm(false)}
+                    className="handwritten"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={addUserPhoto}
+                    className="handwritten bg-blue-100 hover:bg-blue-200 text-blue-800"
+                  >
+                    Add to Gallery
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Photos */}
         {photos.map((photo, index) => (
           <motion.div
@@ -196,7 +440,7 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
               scale: index === currentPhotoIndex ? 1 : 0.9,
               opacity: index === currentPhotoIndex ? 1 : 0.7
             }}
-            drag
+            drag={!isSlideshow}
             dragConstraints={containerRef}
             dragElastic={0.1}
             dragTransition={{ bounceStiffness: 300, bounceDamping: 10 }}
@@ -237,16 +481,40 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
               <div className="absolute -left-2 top-10 w-8 h-4 bg-yellow-100 opacity-60 rotate-12"></div>
               <div className="absolute -right-2 top-10 w-8 h-4 bg-yellow-100 opacity-60 -rotate-12"></div>
               
-              {/* Random handwritten note */}
+              {/* Comment or random handwritten note */}
               <div className="absolute bottom-2 right-4 left-4 text-center">
                 <p className="text-xs handwritten text-blue-600 rotate-1">
-                  {index % 2 === 0 ? "remember this? lol" : "omg look how young u were!!"}
+                  {photo.comment || (index % 2 === 0 ? "remember this? lol" : "omg look how young u were!!")}
                 </p>
               </div>
             </div>
           </motion.div>
         ))}
       </motion.div>
+      
+      {/* Slideshow Navigation */}
+      {isSlideshow && (
+        <div className="mt-4 flex justify-center gap-4">
+          <button 
+            onClick={goToPrevPhoto} 
+            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full"
+          >
+            <SkipBack size={24} />
+          </button>
+          <button 
+            onClick={toggleSlideshow} 
+            className="p-2 bg-red-100 hover:bg-red-200 rounded-full"
+          >
+            <X size={24} />
+          </button>
+          <button 
+            onClick={goToNextPhoto} 
+            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full"
+          >
+            <SkipForward size={24} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

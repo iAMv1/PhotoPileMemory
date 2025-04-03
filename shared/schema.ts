@@ -48,6 +48,7 @@ export const userPhotos = pgTable("user_photos", {
   y: integer("y").notNull(),
   rotation: integer("rotation").notNull(),
   zIndex: integer("z_index").notNull(),
+  comment: text("comment"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

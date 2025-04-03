@@ -68,7 +68,10 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
       rotation: number;
       zIndex: number;
     }) => {
-      return await apiRequest('POST', '/api/user-photos', photoData);
+      return await apiRequest('/api/user-photos', {
+        method: 'POST',
+        body: photoData
+      });
     },
     onSuccess: () => {
       // Invalidate the user photos query to refetch the latest data
