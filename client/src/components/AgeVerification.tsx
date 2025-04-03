@@ -1,4 +1,4 @@
-import { useState, useEffect, FC } from 'react';
+import { useState, useEffect, FC, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
@@ -14,6 +14,35 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
   const [parsedAge, setParsedAge] = useState<number>(0);
   const [jumpscareEnded, setJumpscareEnded] = useState<boolean>(false);
   const [jumpscarePhase, setJumpscarePhase] = useState<number>(0);
+  const [showTVCountdown, setShowTVCountdown] = useState<boolean>(false);
+  const [countdown, setCountdown] = useState<number>(10);
+  
+  // TV Countdown effect
+  const startCountdown = useCallback(() => {
+    setShowTVCountdown(true);
+    
+    // Start at 10 and count down to 0
+    setCountdown(10);
+    
+    // Create a countdown interval
+    const countdownInterval = setInterval(() => {
+      setCountdown(prevCount => {
+        const newCount = prevCount - 1;
+        
+        // When countdown reaches 0, clear interval and start jumpscare
+        if (newCount <= 0) {
+          clearInterval(countdownInterval);
+          setShowTVCountdown(false);
+          setShowJumpscare(true);
+        }
+        
+        return newCount;
+      });
+    }, 1000);
+    
+    // Clean up interval
+    return () => clearInterval(countdownInterval);
+  }, []);
   
   // Horror video and audio elements
   useEffect(() => {
@@ -27,6 +56,10 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
         // Jumpscare scream
         const jumpscareAudio = new Audio("https://assets.mixkit.co/active_storage/sfx/209/209-preview.mp3");
         jumpscareAudio.volume = 1.0;
+        
+        // TV static audio
+        const staticAudio = new Audio("https://assets.mixkit.co/active_storage/sfx/203/203-preview.mp3");
+        staticAudio.volume = 0.3;
         
         // Play sounds
         const audioPromise = backgroundAudio.play();
@@ -63,6 +96,7 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
         return () => {
           backgroundAudio.pause();
           jumpscareAudio.pause();
+          staticAudio.pause();
           phaseTimeline.forEach(timer => clearTimeout(timer));
         };
       } catch (error) {
@@ -83,7 +117,8 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
     }
     
     setParsedAge(numAge);
-    setShowJumpscare(true);
+    // Start countdown instead of directly showing jumpscare
+    startCountdown();
   };
   
   const handleJumpscareClick = () => {
@@ -109,7 +144,64 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
   
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black">
-      {!showJumpscare ? (
+      {showTVCountdown ? (
+        // TV Countdown effect
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black">
+          <div className="relative w-full max-w-2xl aspect-video bg-black border-8 border-gray-800 rounded-lg overflow-hidden shadow-2xl">
+            {/* TV static effect */}
+            <div className="absolute inset-0 bg-static z-0"></div>
+            
+            {/* TV screen with countdown */}
+            <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+              {/* TV static flicker */}
+              <motion.div
+                className="absolute inset-0 bg-black"
+                animate={{ opacity: [0, 0.1, 0, 0.2, 0] }}
+                transition={{ repeat: Infinity, duration: 0.5 }}
+              />
+              
+              {/* TV scan lines */}
+              <div className="absolute inset-0 overflow-hidden opacity-20">
+                {Array.from({ length: 50 }).map((_, i) => (
+                  <div 
+                    key={`scan-${i}`} 
+                    className="w-full h-[2px] bg-white opacity-30"
+                    style={{ marginTop: `${i * 10}px` }}
+                  ></div>
+                ))}
+              </div>
+              
+              {/* Countdown timer */}
+              <motion.div
+                className="relative z-20"
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  textShadow: [
+                    "0 0 8px rgba(255, 0, 0, 0.8)",
+                    "0 0 16px rgba(255, 0, 0, 0.9)",
+                    "0 0 8px rgba(255, 0, 0, 0.8)"
+                  ]
+                }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <h2 className="text-gray-200 text-center mb-4 text-xl">WARNING: HORROR CONTENT</h2>
+                <div className="text-red-600 text-8xl font-mono font-bold horror-text">
+                  {countdown}
+                </div>
+                <p className="text-gray-300 text-center mt-8 text-sm">
+                  The horror begins in <span className="text-red-500 font-bold">{countdown}</span> seconds...
+                </p>
+              </motion.div>
+            </div>
+            
+            {/* TV buttons and knobs */}
+            <div className="absolute bottom-3 right-4 flex space-x-3">
+              <div className="w-5 h-5 rounded-full bg-gray-700"></div>
+              <div className="w-5 h-5 rounded-full bg-gray-700"></div>
+            </div>
+          </div>
+        </div>
+      ) : !showJumpscare ? (
         // Age entry form
         <div className="max-w-md w-full p-8 bg-white shadow-lg rounded notebook-paper relative">
           {/* Paper styling */}

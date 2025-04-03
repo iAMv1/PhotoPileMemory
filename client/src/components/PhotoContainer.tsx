@@ -1,6 +1,9 @@
-import { FC, useState, useRef, useEffect } from 'react';
+import { FC, useState, useRef, useEffect, ChangeEvent } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { PHOTOS } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Upload, X, ImagePlus } from 'lucide-react';
 
 interface PhotoContainerProps {
   isDeepFried: boolean;
@@ -19,6 +22,7 @@ interface DraggablePhoto {
   y: number;
   rotation: number;
   zIndex: number;
+  isUserAdded?: boolean;
 }
 
 const PhotoContainer: FC<PhotoContainerProps> = ({ 
@@ -28,7 +32,9 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
   clearEffects 
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<DraggablePhoto[]>([]);
+  const [showUploadForm, setShowUploadForm] = useState<boolean>(false);
   const controls = useAnimation();
   
   // Initialize photos with random positions
@@ -126,6 +132,63 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
     }
   };
   
+  // Handle file upload dialog
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Process the uploaded file
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    
+    if (files && files.length > 0) {
+      const file = files[0];
+      
+      // Check if it's an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file.');
+        return;
+      }
+      
+      // Create a URL for the image
+      const imageUrl = URL.createObjectURL(file);
+      
+      // Add the new photo
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const containerHeight = containerRef.current.clientHeight;
+        
+        const randomX = Math.floor(Math.random() * (containerWidth - 200));
+        const randomY = Math.floor(Math.random() * (containerHeight - 200));
+        const randomRotation = Math.floor(Math.random() * 20) - 10;
+        
+        // Create new photo with highest Z-index
+        const maxZIndex = photos.length > 0 ? Math.max(...photos.map(p => p.zIndex)) : 0;
+        
+        const newPhoto: DraggablePhoto = {
+          id: Date.now(), // Use timestamp as unique ID
+          src: imageUrl,
+          x: randomX,
+          y: randomY,
+          rotation: randomRotation,
+          zIndex: maxZIndex + 1,
+          isUserAdded: true
+        };
+        
+        setPhotos(prev => [...prev, newPhoto]);
+      }
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      setShowUploadForm(false);
+    }
+  };
+  
   return (
     <motion.div 
       ref={containerRef}
@@ -148,9 +211,81 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
       <div className="absolute top-0 bottom-0 left-16 border-l-2 border-red-300 z-10"></div>
       
       {/* Title for photo section */}
-      <div className="absolute top-4 left-20 z-10">
+      <div className="absolute top-4 left-20 flex items-center space-x-3 z-20">
         <h3 className="text-xl font-bold text-blue-800 handwritten">My Photos</h3>
+        
+        {/* Add photo button */}
+        <Button
+          onClick={() => setShowUploadForm(!showUploadForm)}
+          variant="outline"
+          size="sm"
+          className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 ml-4 flex items-center gap-1 handwritten"
+        >
+          <ImagePlus size={14} />
+          <span>Add Photo</span>
+        </Button>
       </div>
+      
+      {/* Hidden file input */}
+      <input 
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+      
+      {/* Photo upload form */}
+      {showUploadForm && (
+        <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-6 rounded-lg shadow-xl border-2 border-blue-200 w-72">
+          <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={`upload-col-${i}`} className="border-r border-blue-200"></div>
+            ))}
+          </div>
+          <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={`upload-row-${i}`} className="border-b border-blue-200"></div>
+            ))}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            onClick={() => setShowUploadForm(false)}
+          >
+            <X size={16} />
+          </Button>
+          <h3 className="text-lg font-bold text-blue-800 handwritten mb-4 relative z-10">Upload Your Photo</h3>
+          <div 
+            onClick={handleUploadClick}
+            className="border-2 border-dashed border-blue-300 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-colors mb-4 relative z-10"
+          >
+            <Upload className="h-10 w-10 text-blue-500 mb-2" />
+            <p className="text-sm text-center text-gray-600 handwritten">
+              Click to select a photo<br />
+              <span className="text-xs text-gray-500">or drag and drop</span>
+            </p>
+          </div>
+          <div className="flex justify-end space-x-2 relative z-10">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowUploadForm(false)}
+              className="text-gray-600 handwritten"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUploadClick}
+              className="bg-blue-100 text-blue-700 hover:bg-blue-200 handwritten"
+              size="sm"
+            >
+              Upload
+            </Button>
+          </div>
+        </div>
+      )}
       {photos.map((photo, index) => (
         <motion.div
           key={photo.id}
@@ -171,12 +306,12 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
           onDragEnd={(event, info) => handleDragEnd(index, info)}
           style={{ 
             zIndex: photo.zIndex,
-            width: '224px',
-            height: '254px'
+            width: '160px', // Minimized width
+            height: '190px'  // Minimized height
           }}
           data-text={photo.src}
         >
-          <div className="bg-white p-3 pb-10 shadow-lg border-2 border-blue-100 relative">
+          <div className="bg-white p-2 pb-8 shadow-lg border-2 border-blue-100 relative">
             {/* Graph paper pattern background */}
             <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
               {Array.from({ length: 20 }).map((_, i) => (
@@ -190,11 +325,11 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
             </div>
             
             {/* Main photo with effects */}
-            <div className="relative z-10 mb-2">
+            <div className="relative z-10 mb-1">
               <img 
                 src={photo.src} 
                 alt="Birthday memory" 
-                className={`w-56 h-56 object-cover border-4 border-white ${isDeepFried ? 'deep-fried' : ''}`}
+                className={`w-36 h-36 object-cover border-2 border-white ${isDeepFried ? 'deep-fried' : ''}`}
               />
             </div>
             
