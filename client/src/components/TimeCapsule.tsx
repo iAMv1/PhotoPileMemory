@@ -110,36 +110,10 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
     return () => clearInterval(interval);
   }, []);
   
-  // Function to get funny clock number
-  const getFunnyClockNumber = (num: number) => {
-    const funnyNumbers = [
-      '🎂', // 0
-      '🍰', // 1
-      '🎁', // 2
-      '🎈', // 3
-      '🎊', // 4
-      '🎉', // 5
-      '🥳', // 6
-      '🎇', // 7
-      '🎆', // 8
-      '🧁', // 9
-      '🥂', // 10
-      '🎵', // 11
-      '🍾', // 12
-      '💫', // 13
-      '✨', // 14
-      '🎸', // 15
-      '🎤', // 16
-      '🥁', // 17
-      '💃', // 18
-      '🕺', // 19
-      '🍕', // 20
-      '🌮', // 21
-      '🍦', // 22
-      '🍭', // 23
-    ];
-    
-    return num < funnyNumbers.length ? funnyNumbers[num] : num.toString();
+  // Function to get styled clock number
+  const getStyledClockNumber = (num: number) => {
+    // Format the number with leading zero if needed
+    return num < 10 ? `0${num}` : num.toString();
   };
 
   return (
@@ -155,9 +129,9 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className="handwritten-messy text-3xl text-blue-900 font-bold flex items-center justify-center">
-            <span className="text-2xl mr-1">{getFunnyClockNumber(currentHour)}</span>
-            <span className="animate-pulse mx-1">:</span>
-            <span className="text-2xl ml-1">{getFunnyClockNumber(Math.floor(currentMinute/10))}{getFunnyClockNumber(currentMinute%10)}</span>
+            <span className="text-2xl mr-1 bg-gradient-to-r from-pink-500 to-purple-500 text-transparent bg-clip-text shadow-lg">{getStyledClockNumber(currentHour)}</span>
+            <span className="animate-pulse mx-1 text-red-500">:</span>
+            <span className="text-2xl ml-1 bg-gradient-to-r from-blue-500 to-green-500 text-transparent bg-clip-text shadow-lg">{getStyledClockNumber(currentMinute)}</span>
           </div>
           <div className="text-xs text-pink-500 italic text-center font-bold">
             birthday time!
