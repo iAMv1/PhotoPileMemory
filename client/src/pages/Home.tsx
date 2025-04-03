@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
-import PhotoContainer from '@/components/PhotoContainer';
+import PhotoCarousel from '@/components/PhotoCarousel';
 import WishForm from '@/components/WishForm';
 import WishesDisplay from '@/components/WishesDisplay';
 import TimeCapsule from '@/components/TimeCapsule';
@@ -47,32 +47,14 @@ const Home = () => {
     }
   }, [showAgeVerification]);
   
-  // Listen for photo effect events from PhotoContainer
-  useEffect(() => {
-    const handlePhotoEffect = (event: Event) => {
-      const customEvent = event as CustomEvent<{type: string, value: boolean}>;
-      const { type, value } = customEvent.detail;
-      
-      if (type === 'spin') {
-        setPhotoEffects(prev => ({ ...prev, spin: value }));
-      } else if (type === 'deep-fry') {
-        setIsDeepFried(prev => !prev);
-      } else if (type === 'glitch') {
-        setIsGlitched(prev => !prev);
-      } else if (type === 'shake') {
-        setPhotoEffects(prev => ({ ...prev, shake: value }));
-      } else if (type === 'confetti') {
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
-      }
-    };
-    
-    window.addEventListener('photoEffect', handlePhotoEffect);
-    
-    return () => {
-      window.removeEventListener('photoEffect', handlePhotoEffect);
-    };
-  }, []);
+  // Simple effects for the PhotoCarousel
+  const toggleDeepFried = () => {
+    setIsDeepFried(prev => !prev);
+  };
+  
+  const toggleGlitch = () => {
+    setIsGlitched(prev => !prev);
+  };
   
   // Handle age verification completion
   const handleAgeVerificationComplete = (age: number) => {
@@ -130,7 +112,7 @@ const Home = () => {
         <>
           <Header themeClass={themeClass} />
           
-          {/* Birthday-themed text sprinkled around - TOP SECTION */}
+          {/* Birthday-themed text sprinkled around - Reduced for better spacing */}
           <div className="absolute top-24 left-8 rotate-[-15deg] z-10">
             <motion.div 
               className="text-xl handwritten text-purple-600 font-bold"
@@ -141,17 +123,7 @@ const Home = () => {
             </motion.div>
           </div>
           
-          <div className="absolute top-12 left-1/3 rotate-[12deg] z-10">
-            <motion.div 
-              className="text-2xl handwritten text-pink-500 font-bold"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 3.2, repeat: Infinity }}
-            >
-              Buddhe ko janmdin ki badhai!
-            </motion.div>
-          </div>
-          
-          <div className="absolute top-20 right-16 rotate-[-8deg] z-10">
+          <div className="absolute top-12 right-16 rotate-[-8deg] z-10">
             <motion.div 
               className="text-xl handwritten text-orange-500 font-bold"
               animate={{ y: [0, -5, 0], opacity: [0.8, 1, 0.8] }}
@@ -161,38 +133,7 @@ const Home = () => {
             </motion.div>
           </div>
           
-          {/* MIDDLE SECTION messages */}
-          <div className="absolute top-1/2 left-10 rotate-[20deg] z-10">
-            <motion.div 
-              className="text-xl handwritten text-blue-600 font-bold"
-              animate={{ rotate: [0, 10, 0, -10, 0], scale: [1, 1.1, 1] }}
-              transition={{ duration: 4, repeat: Infinity }}
-            >
-              Mubarak ho! Ek kadam aur maut ki taraf!
-            </motion.div>
-          </div>
-          
-          <div className="absolute top-1/3 right-14 rotate-[-12deg] z-10">
-            <motion.div 
-              className="text-lg handwritten text-emerald-600 font-bold"
-              animate={{ scale: [1, 1.15, 1], opacity: [0.75, 1, 0.75] }}
-              transition={{ duration: 3.5, repeat: Infinity }}
-            >
-              Jaldi se cake kaat!
-            </motion.div>
-          </div>
-          
           {/* BOTTOM SECTION messages */}
-          <div className="absolute bottom-32 right-8 rotate-[10deg] z-10">
-            <motion.div 
-              className="text-xl handwritten text-green-600 font-bold"
-              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-            >
-              Janamdin Mubarak Bewakoof!
-            </motion.div>
-          </div>
-          
           <div className="absolute bottom-20 left-20 rotate-[-5deg] z-10">
             <motion.div 
               className="text-xl handwritten text-red-500 font-bold"
@@ -213,25 +154,13 @@ const Home = () => {
             </motion.div>
           </div>
           
-          <div className="absolute top-40 right-20 rotate-[-5deg] z-10">
-            <motion.div 
-              className="text-lg handwritten text-fuchsia-500 font-bold"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              Aaj party teri taraf se!
-            </motion.div>
-          </div>
-          
           {/* Main content */}
           <main className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="lg:w-1/2">
-                <PhotoContainer 
+                <PhotoCarousel 
                   isDeepFried={isDeepFried} 
                   isGlitched={isGlitched} 
-                  photoEffects={photoEffects}
-                  clearEffects={() => setPhotoEffects({ shake: false, spin: false })}
                 />
               </div>
               
@@ -268,7 +197,7 @@ const Home = () => {
                   </div>
                   
                   <p className="handwritten text-gray-700 mb-3 relative z-10">
-                    Another year older and none the wiser! 😜 How does it feel to be officially ancient? Your bones creaking yet?
+                    Enjoy your special day! Add birthday wishes in the form below and check your time capsule messages throughout the day!
                   </p>
                   
                   <div className="flex justify-between mb-3">
@@ -286,28 +215,6 @@ const Home = () => {
                       transition={{ duration: 2.8, repeat: Infinity }}
                     >
                       Janam Din Manaao!
-                    </motion.div>
-                  </div>
-                  
-                  <p className="handwritten text-gray-700 mb-3 relative z-10">
-                    Just kidding (sorta). Enjoy your special day by leaving your wishes in the form below, and check your time capsule messages throughout the day!
-                  </p>
-                  
-                  <div className="flex justify-around mb-2">
-                    <motion.div
-                      className="text-base handwritten text-blue-600 font-bold relative z-10 -rotate-1"
-                      animate={{ y: [0, -2, 0], opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      Janamdin ke din badhai!
-                    </motion.div>
-                    
-                    <motion.div
-                      className="text-base handwritten text-orange-600 font-bold relative z-10 rotate-1"
-                      animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2.3, repeat: Infinity }}
-                    >
-                      Cake kaato, party manao!
                     </motion.div>
                   </div>
                   
