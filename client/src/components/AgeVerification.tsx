@@ -16,6 +16,8 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
   const [jumpscarePhase, setJumpscarePhase] = useState<number>(0);
   const [showTVCountdown, setShowTVCountdown] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(10);
+  const [crackLevel, setCrackLevel] = useState<number>(0);
+  const [showBreakAnimation, setShowBreakAnimation] = useState<boolean>(false);
   
   // TV Countdown effect
   const startCountdown = useCallback(() => {
@@ -117,6 +119,8 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
     }
     
     setParsedAge(numAge);
+    // Increase crack level on form submit
+    setCrackLevel(prev => Math.min(prev + 1, 3));
     // Start countdown instead of directly showing jumpscare
     startCountdown();
   };
@@ -126,9 +130,14 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
     
     // If user has clicked the jumpscare the number of times equal to their age
     if (clickCount + 1 >= parsedAge) {
+      // Show screen breaking animation before completing
+      setShowBreakAnimation(true);
       setTimeout(() => {
         onComplete(parsedAge);
-      }, 500);
+      }, 800);
+    } else {
+      // Increase crack level with each click
+      setCrackLevel(prev => Math.min(prev + 1, 3));
     }
   };
   
@@ -171,9 +180,9 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
                 ))}
               </div>
               
-              {/* Countdown timer */}
+              {/* Countdown timer - centered and larger */}
               <motion.div
-                className="relative z-20"
+                className="relative z-20 flex items-center justify-center w-full h-full"
                 animate={{ 
                   scale: [1, 1.1, 1],
                   textShadow: [
@@ -184,13 +193,9 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
                 }}
                 transition={{ duration: 1, repeat: Infinity }}
               >
-                <h2 className="text-gray-200 text-center mb-4 text-xl">WARNING: HORROR CONTENT</h2>
-                <div className="text-red-600 text-8xl font-mono font-bold horror-text">
+                <div className="text-red-600 text-9xl font-mono font-bold horror-text absolute transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2">
                   {countdown}
                 </div>
-                <p className="text-gray-300 text-center mt-8 text-sm">
-                  The horror begins in <span className="text-red-500 font-bold">{countdown}</span> seconds...
-                </p>
               </motion.div>
             </div>
             
@@ -363,17 +368,33 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
                     }}
                     transition={{ duration: 0.7, times: [0, 0.2, 0.4, 0.6, 1] }}
                   >
-                    <motion.img
-                      src={horrorFaces[1]} 
-                      alt="Horror face"
-                      className="max-w-[80vw] max-h-[80vh] z-30"
-                      animate={{
-                        scale: [1, 1.3, 1.2],
-                        rotate: [0, -3, 3, -2, 0],
-                        filter: ["brightness(0.7) contrast(1.2)", "brightness(1.2) contrast(1.7)", "brightness(0.9) contrast(1.5)"]
-                      }}
-                      transition={{ duration: 0.5, times: [0, 0.25, 0.5, 0.75, 1] }}
-                    />
+                    <div className="relative">
+                      <motion.img
+                        src={horrorFaces[1]} 
+                        alt="Horror face"
+                        className="max-w-[80vw] max-h-[80vh] z-30"
+                        animate={{
+                          scale: [1, 1.3, 1.2],
+                          rotate: [0, -3, 3, -2, 0],
+                          filter: ["brightness(0.7) contrast(1.2)", "brightness(1.2) contrast(1.7)", "brightness(0.9) contrast(1.5)"]
+                        }}
+                        transition={{ duration: 0.5, times: [0, 0.25, 0.5, 0.75, 1] }}
+                      />
+                      {/* "AE LAUDIYA" text overlay */}
+                      <motion.div 
+                        className="absolute bottom-0 left-0 right-0 text-center z-40"
+                        animate={{
+                          y: [0, -10, 0],
+                          opacity: [0.9, 1, 0.9],
+                        }}
+                        transition={{ duration: 0.5, repeat: Infinity }}
+                      >
+                        <h2 className="text-6xl font-bold text-red-500 horror-text" 
+                            style={{ textShadow: "0 0 15px #000, 0 0 10px #000, 0 0 5px #000" }}>
+                          AE LAUDIYA
+                        </h2>
+                      </motion.div>
+                    </div>
                   </motion.div>
                   
                   {/* Red blood overlay */}
@@ -421,6 +442,12 @@ const AgeVerification: FC<AgeVerificationProps> = ({ onComplete }) => {
           ) : (
             // After jumpscare - Click to continue (horror-themed aftermath)
             <div className="text-center p-8 relative">
+              {/* Screen crack effects based on crack level */}
+              {crackLevel >= 1 && <div className="screen-crack-light fixed inset-0 z-30"></div>}
+              {crackLevel >= 2 && <div className="screen-crack-medium fixed inset-0 z-31"></div>}
+              {crackLevel >= 3 && <div className="screen-crack-heavy fixed inset-0 z-32"></div>}
+              {showBreakAnimation && <div className="screen-break-animation fixed inset-0 z-50"></div>}
+              
               {/* Video background for aftermath */}
               <div className="absolute inset-0 overflow-hidden -z-10">
                 <video 

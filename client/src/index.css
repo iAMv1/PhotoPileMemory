@@ -273,4 +273,59 @@
       text-shadow: none;
     }
   }
+  
+  /* Screen crack effects */
+  .screen-crack-light {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2' d='M250,250 L270,200 L290,170 M250,250 L220,210 L200,180 M250,250 L300,260 L330,270'/%3E%3C/svg%3E");
+    background-size: cover;
+    pointer-events: none;
+  }
+  
+  .screen-crack-medium {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' d='M250,250 L270,200 L290,170 L310,130 L330,100 M250,250 L220,210 L200,180 L180,150 L160,120 M250,250 L300,260 L330,270 L360,280 L390,290 M250,250 L230,290 L200,330 L180,370 M250,250 L270,300 L290,350 L310,380'/%3E%3C/svg%3E");
+    background-size: cover;
+    pointer-events: none;
+  }
+  
+  .screen-crack-heavy {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='3' d='M250,250 L270,200 L290,170 L310,130 L330,100 L350,70 L370,40 M250,250 L220,210 L200,180 L180,150 L160,120 L140,90 L120,60 M250,250 L300,260 L330,270 L360,280 L390,290 L420,310 L450,330 M250,250 L230,290 L200,330 L180,370 L150,400 L120,440 M250,250 L270,300 L290,350 L310,380 L330,410 L350,440 M250,250 L200,260 L150,270 L100,280 L50,290'/%3E%3C/svg%3E");
+    background-size: cover;
+    pointer-events: none;
+  }
+  
+  .screen-break-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cpath fill='none' stroke='white' stroke-width='3' d='M250,250 L270,200 L290,170 L310,130 L330,100 L350,70 L370,40 M250,250 L220,210 L200,180 L180,150 L160,120 L140,90 L120,60 M250,250 L300,260 L330,270 L360,280 L390,290 L420,310 L450,330 M250,250 L230,290 L200,330 L180,370 L150,400 L120,440 M250,250 L270,300 L290,350 L310,380 L330,410 L350,440 M250,250 L200,260 L150,270 L100,280 L50,290'/%3E%3C/svg%3E");
+    background-size: cover;
+    opacity: 0;
+    animation: screen-break 0.7s ease-in-out forwards;
+  }
+  
+  @keyframes screen-break {
+    0% {
+      opacity: 0;
+      filter: brightness(1);
+    }
+    20% {
+      opacity: 0.5;
+      filter: brightness(5);
+    }
+    40% {
+      opacity: 0.8;
+      filter: brightness(10);
+    }
+    60% {
+      opacity: 1;
+      filter: brightness(15);
+    }
+    100% {
+      opacity: 0;
+      filter: brightness(1);
+    }
+  }
 }
