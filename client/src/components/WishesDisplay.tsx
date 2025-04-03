@@ -13,12 +13,16 @@ interface Wish {
   fontSize: string;
 }
 
+interface WishResponse {
+  wishes: Wish[];
+}
+
 interface WishesDisplayProps {
   refreshTrigger: number;
 }
 
 const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<WishResponse>({
     queryKey: ['/api/wishes'],
     refetchOnWindowFocus: false,
   });
@@ -30,7 +34,7 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
   }, [refreshTrigger, refetch]);
 
   useEffect(() => {
-    if (data && 'wishes' in data) {
+    if (data?.wishes) {
       setWishes(data.wishes);
     }
   }, [data]);

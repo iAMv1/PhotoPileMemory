@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 
 interface TimeCapsuleProps {
@@ -13,10 +12,14 @@ interface TimeCapsuleMessage {
   message: string;
 }
 
+interface TimeCapsuleResponse {
+  message: TimeCapsuleMessage;
+}
+
 const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
   const [currentHour, setCurrentHour] = useState<number>(new Date().getHours());
   
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<TimeCapsuleResponse>({
     queryKey: ['/api/time-capsule-messages/current'],
     refetchOnWindowFocus: false,
   });
@@ -34,14 +37,26 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
   }, [currentHour]);
   
   return (
-    <Card className="max-w-md mx-auto my-8 bg-gray-900 border-2 border-yellow-400 shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-yellow-400">The Time Capsule</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-white mb-4">Secret messages will appear at specific times!</p>
+    <div className="max-w-md mx-auto my-8 relative">
+      {/* Sticky note appearance */}
+      <div className="bg-yellow-100 p-6 shadow-lg relative transform -rotate-1">
+        {/* Small grid pattern for sticky note */}
+        <div className="absolute inset-0 grid grid-cols-[repeat(40,1fr)] h-full w-full opacity-10 pointer-events-none">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={`sticky-col-${i}`} className="border-r border-black"></div>
+          ))}
+        </div>
+        <div className="absolute inset-0 grid grid-rows-[repeat(40,1fr)] h-full w-full opacity-10 pointer-events-none">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={`sticky-row-${i}`} className="border-b border-black"></div>
+          ))}
+        </div>
+      
+        <h3 className="text-2xl font-bold text-yellow-800 handwritten mb-4">The Time Capsule</h3>
+        <p className="text-yellow-800 mb-4 handwritten">Messages change throughout the day! Keep checking back...</p>
+        
         <motion.div 
-          className={`p-4 bg-gradient-to-r from-pink-500 to-cyan-400 rounded text-center font-bold ${themeClass}`}
+          className="p-5 bg-white rounded shadow-inner text-center"
           initial={{ opacity: 0.8 }}
           animate={{ 
             opacity: [0.8, 1, 0.8],
@@ -53,16 +68,26 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
             ease: "easeInOut" 
           }}
         >
-          {isLoading ? (
-            "Loading message..."
-          ) : data?.message ? (
-            data.message.message
-          ) : (
-            "Waiting for the right moment..."
-          )}
+          <div className="handwritten text-lg font-bold text-blue-900">
+            {isLoading ? (
+              "Loading message..."
+            ) : data?.message ? (
+              data.message.message
+            ) : (
+              "Waiting for the right moment..."
+            )}
+          </div>
         </motion.div>
-      </CardContent>
-    </Card>
+        
+        {/* Tape at the top */}
+        <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-20 h-6 bg-gray-100 opacity-60"></div>
+        
+        {/* Current time */}
+        <div className="absolute bottom-1 right-2 text-xs text-yellow-800">
+          Current Hour: {currentHour}:00
+        </div>
+      </div>
+    </div>
   );
 };
 

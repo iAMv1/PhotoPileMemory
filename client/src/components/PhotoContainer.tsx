@@ -129,13 +129,32 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
   return (
     <motion.div 
       ref={containerRef}
-      className="relative mx-auto my-4 border-4 border-dashed border-fuchsia-500 rounded-lg h-[400px] overflow-hidden"
+      className="relative mx-auto my-4 h-[500px] overflow-hidden bg-white rounded shadow-lg border-2 border-blue-100"
       animate={controls}
     >
+      {/* Graph paper background for the container */}
+      <div className="absolute inset-0 grid grid-cols-[repeat(40,1fr)] h-full w-full opacity-20 pointer-events-none">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <div key={`container-col-${i}`} className="border-r border-blue-300"></div>
+        ))}
+      </div>
+      <div className="absolute inset-0 grid grid-rows-[repeat(40,1fr)] h-full w-full opacity-20 pointer-events-none">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <div key={`container-row-${i}`} className="border-b border-blue-300"></div>
+        ))}
+      </div>
+      
+      {/* Red margin line */}
+      <div className="absolute top-0 bottom-0 left-16 border-l-2 border-red-300 z-10"></div>
+      
+      {/* Title for photo section */}
+      <div className="absolute top-4 left-20 z-10">
+        <h3 className="text-xl font-bold text-blue-800 handwritten">My Photos</h3>
+      </div>
       {photos.map((photo, index) => (
         <motion.div
           key={photo.id}
-          className={`draggable absolute shadow-xl rounded-lg overflow-hidden ${isGlitched ? 'glitch' : ''}`}
+          className={`draggable absolute ${isGlitched ? 'glitch' : ''}`}
           initial={{ x: photo.x, y: photo.y, rotate: photo.rotation }}
           animate={{ 
             x: photo.x, 
@@ -153,15 +172,43 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
           style={{ 
             zIndex: photo.zIndex,
             width: '224px',
-            height: '224px'
+            height: '254px'
           }}
           data-text={photo.src}
         >
-          <img 
-            src={photo.src} 
-            alt="Birthday memory" 
-            className={`w-56 h-56 object-cover ${isDeepFried ? 'deep-fried' : ''}`}
-          />
+          <div className="bg-white p-3 pb-10 shadow-lg border-2 border-blue-100 relative">
+            {/* Graph paper pattern background */}
+            <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={`col-${i}`} className="border-r border-blue-200"></div>
+              ))}
+            </div>
+            <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={`row-${i}`} className="border-b border-blue-200"></div>
+              ))}
+            </div>
+            
+            {/* Main photo with effects */}
+            <div className="relative z-10 mb-2">
+              <img 
+                src={photo.src} 
+                alt="Birthday memory" 
+                className={`w-56 h-56 object-cover border-4 border-white ${isDeepFried ? 'deep-fried' : ''}`}
+              />
+            </div>
+            
+            {/* Tape pieces for authentic paper look */}
+            <div className="absolute -left-2 top-10 w-8 h-4 bg-yellow-100 opacity-60 rotate-12"></div>
+            <div className="absolute -right-2 top-10 w-8 h-4 bg-yellow-100 opacity-60 -rotate-12"></div>
+            
+            {/* Random handwritten note */}
+            <div className="absolute bottom-2 right-4 left-4 text-center">
+              <p className="text-xs handwritten text-blue-600 rotate-1">
+                {index % 2 === 0 ? "remember this? lol" : "omg look how young u were!!"}
+              </p>
+            </div>
+          </div>
         </motion.div>
       ))}
     </motion.div>
