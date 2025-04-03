@@ -2,7 +2,7 @@ import { FC, useState, useRef, useEffect, ChangeEvent } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { PHOTOS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
-import { Play, SkipBack, SkipForward, Upload, X } from 'lucide-react';
+import { Play, SkipBack, SkipForward, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -105,26 +105,136 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
   
   // Go to next photo in carousel
   const goToNextPhoto = () => {
-    setCurrentPhotoIndex((prevIndex) => 
-      prevIndex === photos.length - 1 ? 0 : prevIndex + 1
-    );
+    setCurrentPhotoIndex((prevIndex) => {
+      const newIndex = prevIndex === photos.length - 1 ? 0 : prevIndex + 1;
+      
+      // If we're in slideshow mode, animate the photos to slide left
+      if (isSlideshow && containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const centerX = containerWidth / 2 - 112;
+        const centerY = containerRef.current.clientHeight / 2 - 127;
+        
+        // Update positions with animation
+        setPhotos(prevPhotos => 
+          prevPhotos.map((photo, index) => {
+            let xPosition;
+            
+            // For slideshow mode, calculate new positions
+            if (index === newIndex) {
+              // New center photo
+              xPosition = centerX;
+            } else if (index < newIndex) {
+              // Photos moving further left
+              xPosition = centerX - ((newIndex - index) * 250);
+            } else {
+              // Photos moving right
+              xPosition = centerX + ((index - newIndex) * 250);
+            }
+            
+            return {
+              ...photo,
+              x: xPosition,
+              y: centerY,
+              rotation: 0, // Keep photos straight in slideshow
+            };
+          })
+        );
+      }
+      
+      return newIndex;
+    });
   };
   
   // Go to previous photo in carousel
   const goToPrevPhoto = () => {
-    setCurrentPhotoIndex((prevIndex) => 
-      prevIndex === 0 ? photos.length - 1 : prevIndex - 1
-    );
+    setCurrentPhotoIndex((prevIndex) => {
+      const newIndex = prevIndex === 0 ? photos.length - 1 : prevIndex - 1;
+      
+      // If we're in slideshow mode, animate the photos to slide right
+      if (isSlideshow && containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const centerX = containerWidth / 2 - 112;
+        const centerY = containerRef.current.clientHeight / 2 - 127;
+        
+        // Update positions with animation
+        setPhotos(prevPhotos => 
+          prevPhotos.map((photo, index) => {
+            let xPosition;
+            
+            // For slideshow mode, calculate new positions
+            if (index === newIndex) {
+              // New center photo
+              xPosition = centerX;
+            } else if (index < newIndex) {
+              // Photos moving further left
+              xPosition = centerX - ((newIndex - index) * 250);
+            } else {
+              // Photos moving right
+              xPosition = centerX + ((index - newIndex) * 250);
+            }
+            
+            return {
+              ...photo,
+              x: xPosition,
+              y: centerY,
+              rotation: 0, // Keep photos straight in slideshow
+            };
+          })
+        );
+      }
+      
+      return newIndex;
+    });
   };
   
-  // Handle random photo selection
+  // Handle random photo selection with zoom animation
   const goToRandomPhoto = () => {
     let randomIndex;
     do {
       randomIndex = Math.floor(Math.random() * photos.length);
     } while (randomIndex === currentPhotoIndex && photos.length > 1);
     
+    // Set the new current photo index
     setCurrentPhotoIndex(randomIndex);
+    
+    // Apply zoom animation to the randomly selected photo
+    const updatedPhotos = [...photos];
+    
+    // First bring it to the front by setting highest z-index
+    const maxZIndex = Math.max(...updatedPhotos.map(photo => photo.zIndex));
+    updatedPhotos[randomIndex].zIndex = maxZIndex + 1;
+    
+    // If in slideshow mode, also center it
+    if (isSlideshow && containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const centerX = containerWidth / 2 - 112;
+      const centerY = containerRef.current.clientHeight / 2 - 127;
+      
+      // Position the random photo in the center
+      updatedPhotos[randomIndex].x = centerX;
+      updatedPhotos[randomIndex].y = centerY;
+      
+      // Update all other photos' positions
+      updatedPhotos.forEach((photo, index) => {
+        if (index !== randomIndex) {
+          if (index < randomIndex) {
+            updatedPhotos[index].x = centerX - ((randomIndex - index) * 250);
+          } else {
+            updatedPhotos[index].x = centerX + ((index - randomIndex) * 250);
+          }
+          updatedPhotos[index].y = centerY;
+          updatedPhotos[index].rotation = 0;
+        }
+      });
+    }
+    
+    setPhotos(updatedPhotos);
+    
+    // Apply zoom animation using the controls
+    controls.start({
+      scale: [1, 1.2, 1],
+      transition: { duration: 0.5 }
+    });
   };
   
   // Add a new photo at a random position
@@ -222,21 +332,41 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
 
   // Toggle slideshow mode
   const toggleSlideshow = () => {
-    // When entering slideshow mode, center all photos
+    // When entering slideshow mode, arrange photos in a slider format
     if (!isSlideshow) {
-      // Stack all photos in the center
-      const centerX = containerRef.current ? 
-        (containerRef.current.clientWidth / 2) - 112 : 0;
-      const centerY = containerRef.current ? 
-        (containerRef.current.clientHeight / 2) - 127 : 0;
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const containerHeight = containerRef.current.clientHeight;
         
-      const updatedPhotos = photos.map(photo => ({
-        ...photo,
-        x: centerX,
-        y: centerY,
-      }));
-      
-      setPhotos(updatedPhotos);
+        // Calculate positions for slider layout
+        const centerX = containerWidth / 2 - 112;
+        const centerY = containerHeight / 2 - 127;
+        
+        // Arrange photos horizontally with the current photo in center
+        const updatedPhotos = photos.map((photo, index) => {
+          let xPosition;
+          
+          if (index === currentPhotoIndex) {
+            // Center position for current photo
+            xPosition = centerX;
+          } else if (index < currentPhotoIndex) {
+            // Position to the left for previous photos
+            xPosition = centerX - ((currentPhotoIndex - index) * 250);
+          } else {
+            // Position to the right for next photos
+            xPosition = centerX + ((index - currentPhotoIndex) * 250);
+          }
+          
+          return {
+            ...photo,
+            x: xPosition,
+            y: centerY,
+            rotation: 0, // Keep photos straight in slideshow mode
+          };
+        });
+        
+        setPhotos(updatedPhotos);
+      }
     }
     
     setIsSlideshow(!isSlideshow);
@@ -324,6 +454,23 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
         className="relative mx-auto h-[500px] overflow-hidden bg-white rounded shadow-lg border-2 border-blue-100"
         animate={controls}
       >
+        {/* Side navigation arrows for slideshow */}
+        {isSlideshow && (
+          <>
+            <button 
+              onClick={goToPrevPhoto}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 p-2 bg-black bg-opacity-30 hover:bg-opacity-50 rounded-full text-white"
+            >
+              <ChevronLeft size={30} />
+            </button>
+            <button 
+              onClick={goToNextPhoto}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 p-2 bg-black bg-opacity-30 hover:bg-opacity-50 rounded-full text-white"
+            >
+              <ChevronRight size={30} />
+            </button>
+          </>
+        )}
         {/* Graph paper background for the container */}
         <div className="absolute inset-0 grid grid-cols-[repeat(40,1fr)] h-full w-full opacity-20 pointer-events-none">
           {Array.from({ length: 40 }).map((_, i) => (
