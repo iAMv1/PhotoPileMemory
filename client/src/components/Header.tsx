@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import { motion } from 'framer-motion';
 
 interface HeaderProps {
   themeClass: string;
@@ -35,6 +36,29 @@ const Header: FC<HeaderProps> = ({ themeClass }) => {
         <div className="text-center mt-1">
           <span className="italic text-gray-500 text-sm">* this birthday card is intentionally embarrassing *</span>
         </div>
+        <div className="flex justify-center space-x-8 mt-3">
+          <motion.div 
+            className="text-xl handwritten text-fuchsia-600 font-bold"
+            animate={{ scale: [1, 1.1, 1], rotate: [0, 3, 0, -3, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+          >
+            Janamdin Mubarak Ho!
+          </motion.div>
+          <motion.div 
+            className="text-xl handwritten text-blue-600 font-bold"
+            animate={{ y: [0, -3, 0], scale: [1, 1.05, 1] }}
+            transition={{ duration: 1.8, repeat: Infinity }}
+          >
+            Janmadin ki Badhai!
+          </motion.div>
+          <motion.div 
+            className="text-xl handwritten text-green-600 font-bold"
+            animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            Shubbh Janamdin!
+          </motion.div>
+        </div>
       </div>
       
       {/* Some decorative elements */}
@@ -44,6 +68,20 @@ const Header: FC<HeaderProps> = ({ themeClass }) => {
       <div className="absolute top-6 left-4 text-blue-500 text-lg handwritten -rotate-6">
         don't fall<br/>& break a hip!
       </div>
+      <motion.div 
+        className="absolute bottom-2 right-10 text-purple-600 text-xl handwritten rotate-6"
+        animate={{ scale: [1, 1.1, 1], opacity: [0.9, 1, 0.9] }}
+        transition={{ duration: 2.2, repeat: Infinity }}
+      >
+        Buddhu ka Birthday!
+      </motion.div>
+      <motion.div 
+        className="absolute bottom-3 left-20 text-orange-500 text-lg handwritten -rotate-3"
+        animate={{ rotate: [-3, 0, -3], scale: [1, 1.05, 1] }}
+        transition={{ duration: 3, repeat: Infinity }}
+      >
+        Ek aur saal boodha ho gaya!
+      </motion.div>
     </header>
   );
 };

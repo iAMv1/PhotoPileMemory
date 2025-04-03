@@ -86,7 +86,7 @@ const Home = () => {
         <>
           <Header themeClass={themeClass} />
           
-          {/* Birthday-themed text sprinkled around */}
+          {/* Birthday-themed text sprinkled around - TOP SECTION */}
           <div className="absolute top-24 left-8 rotate-[-15deg] z-10">
             <motion.div 
               className="text-xl handwritten text-purple-600 font-bold"
@@ -97,6 +97,48 @@ const Home = () => {
             </motion.div>
           </div>
           
+          <div className="absolute top-12 left-1/3 rotate-[12deg] z-10">
+            <motion.div 
+              className="text-2xl handwritten text-pink-500 font-bold"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 3.2, repeat: Infinity }}
+            >
+              Buddhe ko janmdin ki badhai!
+            </motion.div>
+          </div>
+          
+          <div className="absolute top-20 right-16 rotate-[-8deg] z-10">
+            <motion.div 
+              className="text-xl handwritten text-orange-500 font-bold"
+              animate={{ y: [0, -5, 0], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 2.8, repeat: Infinity }}
+            >
+              Kitne saal ka hua re tu?
+            </motion.div>
+          </div>
+          
+          {/* MIDDLE SECTION messages */}
+          <div className="absolute top-1/2 left-10 rotate-[20deg] z-10">
+            <motion.div 
+              className="text-xl handwritten text-blue-600 font-bold"
+              animate={{ rotate: [0, 10, 0, -10, 0], scale: [1, 1.1, 1] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            >
+              Mubarak ho! Ek kadam aur maut ki taraf!
+            </motion.div>
+          </div>
+          
+          <div className="absolute top-1/3 right-14 rotate-[-12deg] z-10">
+            <motion.div 
+              className="text-lg handwritten text-emerald-600 font-bold"
+              animate={{ scale: [1, 1.15, 1], opacity: [0.75, 1, 0.75] }}
+              transition={{ duration: 3.5, repeat: Infinity }}
+            >
+              Jaldi se cake kaat!
+            </motion.div>
+          </div>
+          
+          {/* BOTTOM SECTION messages */}
           <div className="absolute bottom-32 right-8 rotate-[10deg] z-10">
             <motion.div 
               className="text-xl handwritten text-green-600 font-bold"
@@ -107,13 +149,33 @@ const Home = () => {
             </motion.div>
           </div>
           
-          <div className="absolute top-40 right-20 rotate-[-5deg] z-10">
+          <div className="absolute bottom-20 left-20 rotate-[-5deg] z-10">
             <motion.div 
-              className="text-lg handwritten text-red-500 font-bold"
+              className="text-xl handwritten text-red-500 font-bold"
               animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
               Buddha ho gaya tu!
+            </motion.div>
+          </div>
+          
+          <div className="absolute bottom-48 left-1/2 rotate-[8deg] z-10">
+            <motion.div 
+              className="text-2xl handwritten text-indigo-600 font-bold"
+              animate={{ x: [0, 10, 0, -10, 0], opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 4.5, repeat: Infinity }}
+            >
+              Janamdin ki shubhkamnayein!
+            </motion.div>
+          </div>
+          
+          <div className="absolute top-40 right-20 rotate-[-5deg] z-10">
+            <motion.div 
+              className="text-lg handwritten text-fuchsia-500 font-bold"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              Aaj party teri taraf se!
             </motion.div>
           </div>
           
@@ -149,13 +211,59 @@ const Home = () => {
                     Happy Birthday Dude! 🎂
                   </motion.h2>
                   
+                  <div className="flex justify-center mb-3">
+                    <motion.div
+                      className="text-xl handwritten text-red-500 font-bold relative z-10"
+                      animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                    >
+                      Janamdin ki Shubhkamnayein! 🎊
+                    </motion.div>
+                  </div>
+                  
                   <p className="handwritten text-gray-700 mb-3 relative z-10">
                     Another year older and none the wiser! 😜 How does it feel to be officially ancient? Your bones creaking yet?
                   </p>
                   
+                  <div className="flex justify-between mb-3">
+                    <motion.div
+                      className="text-lg handwritten text-purple-600 font-bold relative z-10 -rotate-2"
+                      animate={{ rotate: [-2, 0, -2], opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      Budhe ho gaye tum!
+                    </motion.div>
+                    
+                    <motion.div
+                      className="text-lg handwritten text-green-600 font-bold relative z-10 rotate-2"
+                      animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2.8, repeat: Infinity }}
+                    >
+                      Janam Din Manaao!
+                    </motion.div>
+                  </div>
+                  
                   <p className="handwritten text-gray-700 mb-3 relative z-10">
                     Just kidding (sorta). Enjoy your special day by leaving your wishes in the form below, and check your time capsule messages throughout the day!
                   </p>
+                  
+                  <div className="flex justify-around mb-2">
+                    <motion.div
+                      className="text-base handwritten text-blue-600 font-bold relative z-10 -rotate-1"
+                      animate={{ y: [0, -2, 0], opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      Janamdin ke din badhai!
+                    </motion.div>
+                    
+                    <motion.div
+                      className="text-base handwritten text-orange-600 font-bold relative z-10 rotate-1"
+                      animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+                      transition={{ duration: 2.3, repeat: Infinity }}
+                    >
+                      Cake kaato, party manao!
+                    </motion.div>
+                  </div>
                   
                   <motion.div 
                     className="text-center font-bold handwritten text-xl text-pink-600 mt-4"
@@ -189,9 +297,18 @@ const Home = () => {
                     ))}
                   </div>
                   
-                  <h2 className="text-xl font-bold handwritten text-blue-800 mb-4 relative z-10">
+                  <h2 className="text-xl font-bold handwritten text-blue-800 mb-2 relative z-10">
                     Birthday Notes From Your "Friends"
                   </h2>
+                  <div className="flex justify-center mb-4">
+                    <motion.div
+                      className="text-lg handwritten text-purple-500 font-bold relative z-10"
+                      animate={{ scale: [1, 1.1, 1], rotate: [0, 1, 0, -1, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      Dosto ke Janamdin ke Sandesh
+                    </motion.div>
+                  </div>
 
                   <div className="relative min-h-[550px]" id="sticky-notes-board">
                     {/* Custom WishesDisplay component will render stickies inside this board */}

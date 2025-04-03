@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import { motion } from 'framer-motion';
 
 interface FooterProps {
   themeClass: string;
@@ -23,10 +24,35 @@ const Footer: FC<FooterProps> = ({ themeClass }) => {
       <div className="relative">
         <p className="text-sm handwritten text-blue-900">Made with <span className="text-red-500">♥</span> and absolutely <span className="underline">terrible</span> design skills</p>
         <p className="text-xs mt-1 text-gray-600">*PERFECT FOR SOMEONE YOUR AGE*</p>
+        
+        <div className="flex justify-center space-x-6 mt-2">
+          <motion.div 
+            className="text-sm handwritten text-pink-600 font-bold"
+            animate={{ opacity: [0.7, 1, 0.7], y: [0, -2, 0] }}
+            transition={{ duration: 2.1, repeat: Infinity }}
+          >
+            Janamdin ke shubhkamanayein!
+          </motion.div>
+          <motion.div 
+            className="text-sm handwritten text-blue-600 font-bold"
+            animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 1.8, repeat: Infinity }}
+          >
+            Janam din ki hardik badhai!
+          </motion.div>
+          <motion.div 
+            className="text-sm handwritten text-purple-600 font-bold"
+            animate={{ rotate: [0, 2, 0, -2, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+          >
+            Janamdin par dher saari badhaiyan!
+          </motion.div>
+        </div>
+        
         <p className="text-xs mt-2 animate-pulse text-blue-800">Tip: Try the Konami Code (↑ ↑ ↓ ↓ ← → ← → B A) if you can still remember it, grandpa</p>
         <div className="mt-2 text-blue-700 text-[10px] overflow-hidden">
           <div className="animate-marquee whitespace-nowrap handwritten">
-            FROM YOUR FAVORITE PEOPLE --- WHO TOTALLY DIDN'T FORGET YOUR BIRTHDAY --- UNTIL THE LAST MINUTE ---
+            FROM YOUR FAVORITE PEOPLE --- WHO TOTALLY DIDN'T FORGET YOUR BIRTHDAY --- UNTIL THE LAST MINUTE --- HAPPY BIRTHDAY BUDDHA --- EK AUR SAAL GUZAR GAYA --- PARTY KIDHAR HAI? ---
           </div>
         </div>
       </div>
@@ -38,6 +64,20 @@ const Footer: FC<FooterProps> = ({ themeClass }) => {
       <div className="absolute bottom-2 right-4 text-red-400 handwritten text-xs rotate-6">
         the end!
       </div>
+      <motion.div 
+        className="absolute top-2 left-10 text-green-500 handwritten text-xs rotate-6"
+        animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        Janmadin ki Ram Ram!
+      </motion.div>
+      <motion.div 
+        className="absolute top-2 right-10 text-orange-500 handwritten text-xs -rotate-3"
+        animate={{ y: [0, -2, 0], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      >
+        Janamdin ki lakh lakh badhai!
+      </motion.div>
     </footer>
   );
 };
