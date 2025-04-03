@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Upload, X, ImagePlus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import PhotoEffects from './PhotoEffects';
 
 interface PhotoContainerProps {
   isDeepFried: boolean;
@@ -261,12 +262,56 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
     }
   };
   
+  // Handler for photo effects
+  const handleEffectClick = (effectId: string) => {
+    // Apply effects based on the clicked effect
+    if (effectId === 'shake') {
+      // Apply shake effect directly
+      controls.start({
+        x: [0, -10, 10, -10, 10, 0],
+        transition: { duration: 0.5 }
+      });
+    } 
+    else if (effectId === 'spin') {
+      // Send to parent component to handle the spin effect
+      if (!photoEffects.spin) {
+        const event = new CustomEvent('photoEffect', {
+          detail: { type: 'spin', value: true }
+        });
+        window.dispatchEvent(event);
+      }
+    }
+    else if (effectId === 'deep-fried') {
+      // Send to parent component to toggle deep-fried effect
+      const event = new CustomEvent('photoEffect', {
+        detail: { type: 'deep-fry', value: true }
+      });
+      window.dispatchEvent(event);
+    }
+    else if (effectId === 'glitch') {
+      // Send to parent component to toggle glitch effect
+      const event = new CustomEvent('photoEffect', {
+        detail: { type: 'glitch', value: true }
+      });
+      window.dispatchEvent(event);
+    }
+    else if (effectId === 'confetti') {
+      // Trigger confetti in parent component
+      const event = new CustomEvent('photoEffect', {
+        detail: { type: 'confetti', value: true }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+  
   return (
-    <motion.div 
-      ref={containerRef}
-      className="relative mx-auto my-4 h-[500px] overflow-hidden bg-white rounded shadow-lg border-2 border-blue-100"
-      animate={controls}
-    >
+    <div className="flex flex-col space-y-2">
+      <PhotoEffects onEffectClick={handleEffectClick} />
+      <motion.div 
+        ref={containerRef}
+        className="relative mx-auto h-[500px] overflow-hidden bg-white rounded shadow-lg border-2 border-blue-100"
+        animate={controls}
+      >
       {/* Graph paper background for the container */}
       <div className="absolute inset-0 grid grid-cols-[repeat(40,1fr)] h-full w-full opacity-20 pointer-events-none">
         {Array.from({ length: 40 }).map((_, i) => (
@@ -418,7 +463,8 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
           </div>
         </motion.div>
       ))}
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 

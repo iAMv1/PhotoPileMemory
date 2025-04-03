@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
-import PhotoCarousel from '@/components/PhotoCarousel';
+import PhotoContainer from '@/components/PhotoContainer';
 import WishForm from '@/components/WishForm';
 import WishesDisplay from '@/components/WishesDisplay';
 import TimeCapsule from '@/components/TimeCapsule';
@@ -26,6 +26,10 @@ const Home = () => {
   const [showConfetti, setShowConfetti] = useState<boolean>(true);
   const [isDeepFried, setIsDeepFried] = useState<boolean>(false);
   const [isGlitched, setIsGlitched] = useState<boolean>(false);
+  const [photoEffects, setPhotoEffects] = useState<{shake: boolean; spin: boolean}>({
+    shake: false,
+    spin: false
+  });
   const [konamiDialogOpen, setKonamiDialogOpen] = useState(false);
   const [konamiActive, setKonamiActive] = useState(false);
   const [wishRefreshTrigger, setWishRefreshTrigger] = useState(0);
@@ -42,6 +46,33 @@ const Home = () => {
       return () => clearTimeout(timer);
     }
   }, [showAgeVerification]);
+  
+  // Listen for photo effect events from PhotoContainer
+  useEffect(() => {
+    const handlePhotoEffect = (event: Event) => {
+      const customEvent = event as CustomEvent<{type: string, value: boolean}>;
+      const { type, value } = customEvent.detail;
+      
+      if (type === 'spin') {
+        setPhotoEffects(prev => ({ ...prev, spin: value }));
+      } else if (type === 'deep-fry') {
+        setIsDeepFried(prev => !prev);
+      } else if (type === 'glitch') {
+        setIsGlitched(prev => !prev);
+      } else if (type === 'shake') {
+        setPhotoEffects(prev => ({ ...prev, shake: value }));
+      } else if (type === 'confetti') {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+    };
+    
+    window.addEventListener('photoEffect', handlePhotoEffect);
+    
+    return () => {
+      window.removeEventListener('photoEffect', handlePhotoEffect);
+    };
+  }, []);
   
   // Handle age verification completion
   const handleAgeVerificationComplete = (age: number) => {
@@ -60,6 +91,19 @@ const Home = () => {
   // Handle wish added
   const handleWishAdded = () => {
     setWishRefreshTrigger(prev => prev + 1);
+  };
+  
+  // Handle photo effect changes
+  const handlePhotoEffectChange = (effectId: string) => {
+    if (effectId === 'shake') {
+      setPhotoEffects(prev => ({ ...prev, shake: !prev.shake }));
+    } else if (effectId === 'spin') {
+      setPhotoEffects(prev => ({ ...prev, spin: !prev.spin }));
+    } else if (effectId === 'deep-fry') {
+      setIsDeepFried(prev => !prev);
+    } else if (effectId === 'glitch') {
+      setIsGlitched(prev => !prev);
+    }
   };
   
   // Konami code handler
@@ -183,9 +227,11 @@ const Home = () => {
           <main className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="lg:w-1/2">
-                <PhotoCarousel 
+                <PhotoContainer 
                   isDeepFried={isDeepFried} 
                   isGlitched={isGlitched} 
+                  photoEffects={photoEffects}
+                  clearEffects={() => setPhotoEffects({ shake: false, spin: false })}
                 />
               </div>
               
