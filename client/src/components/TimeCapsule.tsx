@@ -1,6 +1,21 @@
 import { FC, useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
 
 interface TimeCapsuleProps {
   themeClass: string;
@@ -16,28 +31,101 @@ interface TimeCapsuleResponse {
   message: TimeCapsuleMessage;
 }
 
+const messageSchema = z.object({
+  hour: z.number()
+    .min(0, { message: "Hour must be at least 0" })
+    .max(23, { message: "Hour must be at most 23" }),
+  message: z.string()
+    .min(1, { message: "Message is required" })
+    .max(200, { message: "Message must be at most 200 characters" }),
+  authorName: z.string().optional()
+});
+
+type MessageFormData = z.infer<typeof messageSchema>;
+
 const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
+  const { toast } = useToast();
   const [currentHour, setCurrentHour] = useState<number>(new Date().getHours());
+  const [currentMinute, setCurrentMinute] = useState<number>(new Date().getMinutes());
+  const [showForm, setShowForm] = useState<boolean>(false);
   
   const { data, isLoading } = useQuery<TimeCapsuleResponse>({
     queryKey: ['/api/time-capsule-messages/current'],
     refetchOnWindowFocus: false,
   });
   
-  // Update the current hour every minute
+  const form = useForm<MessageFormData>({
+    resolver: zodResolver(messageSchema),
+    defaultValues: {
+      hour: currentHour,
+      message: "",
+      authorName: ""
+    }
+  });
+
+  const messageMutation = useMutation({
+    mutationFn: async (data: MessageFormData) => {
+      return apiRequest('POST', '/api/time-capsule-messages', {
+        hour: data.hour,
+        message: data.authorName 
+          ? `${data.message} - from ${data.authorName}`
+          : data.message
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['/api/time-capsule-messages'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/time-capsule-messages/current'] });
+      toast({
+        title: "Message Scheduled!",
+        description: "Your message has been added to the time capsule.",
+      });
+      form.reset({
+        hour: currentHour,
+        message: "",
+        authorName: ""
+      });
+      setShowForm(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add message",
+        description: error.message || "An error occurred while adding your message",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const onSubmit = (data: MessageFormData) => {
+    messageMutation.mutate(data);
+  };
+  
+  // Update the current time every minute
   useEffect(() => {
     const interval = setInterval(() => {
-      const newHour = new Date().getHours();
-      if (newHour !== currentHour) {
-        setCurrentHour(newHour);
-      }
-    }, 60000); // Check every minute
+      const now = new Date();
+      setCurrentHour(now.getHours());
+      setCurrentMinute(now.getMinutes());
+    }, 5000); // Check every 5 seconds
     
     return () => clearInterval(interval);
-  }, [currentHour]);
+  }, []);
   
   return (
-    <div className="max-w-md mx-auto my-8 relative">
+    <div className="w-full md:w-[350px] my-4 relative">
+      {/* Clock */}
+      <div className="mb-4 text-center">
+        <motion.div
+          className="inline-block p-3 bg-white rounded-full shadow-md"
+          animate={{ rotate: [0, 2, 0, -2, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div className="handwritten-messy text-3xl text-blue-900 font-bold">
+            {currentHour}:{currentMinute.toString().padStart(2, '0')}
+          </div>
+          <div className="text-xs text-gray-500 italic">aging in real-time...</div>
+        </motion.div>
+      </div>
+      
       {/* Sticky note appearance */}
       <div className="bg-yellow-100 p-6 shadow-lg relative transform -rotate-1">
         {/* Small grid pattern for sticky note */}
@@ -53,7 +141,9 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
         </div>
       
         <h3 className="text-2xl font-bold text-yellow-800 handwritten mb-4">The Time Capsule</h3>
-        <p className="text-yellow-800 mb-4 handwritten">Messages change throughout the day! Keep checking back...</p>
+        <p className="text-yellow-800 mb-4 handwritten-neat text-sm">
+          Messages appear at specific hours! <br />Add your own timed message below.
+        </p>
         
         <motion.div 
           className="p-5 bg-white rounded shadow-inner text-center"
@@ -78,6 +168,96 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
             )}
           </div>
         </motion.div>
+        
+        {!showForm ? (
+          <Button 
+            onClick={() => setShowForm(true)}
+            className="w-full mt-4 bg-amber-100 text-amber-900 font-bold py-2 border-2 border-amber-300 hover:bg-amber-200 transition-colors handwritten text-sm"
+          >
+            Add Your Own Message
+          </Button>
+        ) : (
+          <div className="mt-4 p-4 bg-white rounded shadow-inner">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="hour"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="handwritten text-amber-900">Show at hour (0-23):</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field} 
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                          min={0}
+                          max={23}
+                          className="handwritten-input"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500 text-xs" />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="handwritten text-amber-900">Birthday Message:</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          className="handwritten-input"
+                          placeholder="Your secret birthday message..."
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500 text-xs" />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="authorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="handwritten text-amber-900">Your Name (optional):</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          className="handwritten-input"
+                          placeholder="Sign your message..."
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500 text-xs" />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex space-x-2">
+                  <Button 
+                    type="submit"
+                    className="flex-1 bg-green-100 text-green-900 font-bold py-2 border-2 border-green-300 hover:bg-green-200 transition-colors handwritten text-sm"
+                    disabled={messageMutation.isPending}
+                  >
+                    {messageMutation.isPending ? "Adding..." : "Add Message"}
+                  </Button>
+                  
+                  <Button 
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    className="flex-1 bg-red-100 text-red-900 font-bold py-2 border-2 border-red-300 hover:bg-red-200 transition-colors handwritten text-sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        )}
         
         {/* Tape at the top */}
         <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-20 h-6 bg-gray-100 opacity-60"></div>

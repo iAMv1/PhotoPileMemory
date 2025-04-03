@@ -28,6 +28,7 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
   });
 
   const [wishes, setWishes] = useState<Wish[]>([]);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   useEffect(() => {
     refetch();
@@ -93,7 +94,7 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
 
   if (isLoading) {
     return (
-      <div className="relative w-full overflow-hidden flex items-center justify-center h-96">
+      <div className="fixed bottom-4 right-4 z-30 w-[300px] shadow-xl rounded">
         <div className="bg-blue-50 p-6 rounded-md">
           <p className="text-blue-800 handwritten">Getting your embarrassing notes...</p>
         </div>
@@ -102,55 +103,93 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
   }
 
   return (
-    <div className="relative w-full overflow-hidden py-6 h-96">
-      <h2 className="text-2xl font-bold mb-4 text-center handwritten text-blue-900">Birthday Notes From Your "Friends"</h2>
-      
-      <div className="w-full h-full relative">
-        {wishes.map((wish) => (
-          <motion.div
-            key={wish.id}
-            className={`float-wish absolute ${wish.style === 'rainbow' ? 'rainbow-text' : ''}`}
-            style={{
-              top: `${wish.topPosition}%`,
-              left: `${wish.leftPosition}%`,
-              fontSize: wish.fontSize,
-              '--rand': (Math.random() * 0.7 + 0.3).toString(),
-              '--rot': `${wish.rotation}deg`,
-              ...getStyleProps(wish.style),
-              padding: '20px',
-              background: 'rgba(255, 255, 255, 0.85)',
-              borderRadius: '2px',
-              boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
-              maxWidth: '200px',
-              transform: `rotate(${wish.rotation}deg)`, // Add direct rotation
-              zIndex: Math.floor(Math.random() * 10),
-            } as any}
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            whileHover={{ scale: 1.05, zIndex: 50 }}
+    <div className={`fixed bottom-4 right-4 z-30 transition-all duration-300 ease-in-out 
+      ${isExpanded ? 'w-[400px] h-[500px]' : 'w-[300px] h-[200px]'}`}
+    >
+      {/* Expandable wishes box with notebook aesthetic */}
+      <motion.div 
+        className="w-full h-full bg-white border-2 border-blue-300 shadow-xl rounded overflow-hidden flex flex-col"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Grid pattern background */}
+        <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={`wish-display-col-${i}`} className="border-r border-blue-200"></div>
+          ))}
+        </div>
+        <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={`wish-display-row-${i}`} className="border-b border-blue-200"></div>
+          ))}
+        </div>
+        
+        {/* Header with expand/collapse button */}
+        <div className="relative py-2 px-4 bg-blue-50 border-b-2 border-blue-200 flex justify-between items-center">
+          <h2 className="text-lg font-bold handwritten text-blue-900 truncate">
+            Birthday Notes From Your "Friends"
+          </h2>
+          
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="bg-blue-100 hover:bg-blue-200 text-blue-800 p-1 rounded"
           >
-            <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={`col-${i}`} className="border-r border-blue-200"></div>
-              ))}
-            </div>
-            <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <div key={`row-${i}`} className="border-b border-blue-200"></div>
-              ))}
-            </div>
-            
-            <div className="relative z-10">
-              {wish.text}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-      
-      <div className="text-center text-sm text-gray-500 mt-4">
-        <p>Hover over notes to read them better</p>
-      </div>
+            {isExpanded ? '↓' : '↑'}
+          </button>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 relative overflow-auto">
+          <div className="absolute inset-0 p-4">
+            {wishes.map((wish) => (
+              <motion.div
+                key={wish.id}
+                className={`float-wish absolute ${wish.style === 'rainbow' ? 'rainbow-text' : ''}`}
+                style={{
+                  top: `${wish.topPosition}%`,
+                  left: `${wish.leftPosition}%`,
+                  fontSize: wish.fontSize,
+                  '--rand': (Math.random() * 0.7 + 0.3).toString(),
+                  '--rot': `${wish.rotation}deg`,
+                  ...getStyleProps(wish.style),
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  borderRadius: '2px',
+                  boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
+                  maxWidth: '180px',
+                  transform: `rotate(${wish.rotation}deg)`,
+                  zIndex: Math.floor(Math.random() * 10),
+                } as any}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                whileHover={{ scale: 1.05, zIndex: 50 }}
+              >
+                <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={`wish-col-${i}-${wish.id}`} className="border-r border-blue-200"></div>
+                  ))}
+                </div>
+                <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={`wish-row-${i}-${wish.id}`} className="border-b border-blue-200"></div>
+                  ))}
+                </div>
+                
+                <div className="relative z-10">
+                  {wish.text}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="p-2 text-center text-xs text-gray-500 bg-blue-50 border-t border-blue-200">
+          <p>Hover over notes to read them better</p>
+        </div>
+      </motion.div>
     </div>
   );
 };
