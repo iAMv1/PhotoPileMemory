@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import PhotoCarousel from '@/components/PhotoCarousel';
 import WishForm from '@/components/WishForm';
@@ -85,23 +86,95 @@ const Home = () => {
         <>
           <Header themeClass={themeClass} />
           
+          {/* Birthday-themed text sprinkled around */}
+          <div className="absolute top-24 left-8 rotate-[-15deg] z-10">
+            <motion.div 
+              className="text-xl handwritten text-purple-600 font-bold"
+              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              Ek saal aur khatam!!
+            </motion.div>
+          </div>
+          
+          <div className="absolute bottom-32 right-8 rotate-[10deg] z-10">
+            <motion.div 
+              className="text-xl handwritten text-green-600 font-bold"
+              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            >
+              Janamdin Mubarak Bewakoof!
+            </motion.div>
+          </div>
+          
+          <div className="absolute top-40 right-20 rotate-[-5deg] z-10">
+            <motion.div 
+              className="text-lg handwritten text-red-500 font-bold"
+              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              Buddha ho gaya tu!
+            </motion.div>
+          </div>
+          
           {/* Main content */}
           <main className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row gap-6">
-              <div className="lg:w-3/4">
+              <div className="lg:w-1/2">
                 <PhotoCarousel 
                   isDeepFried={isDeepFried} 
                   isGlitched={isGlitched} 
                 />
+              </div>
+              
+              <div className="lg:w-1/2 flex flex-col">
+                <div className="mb-6 p-4 bg-white rounded-lg shadow-lg relative notebook-paper">
+                  {/* Paper styling */}
+                  <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={`note-col-${i}`} className="border-r border-blue-200"></div>
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={`note-row-${i}`} className="border-b border-blue-200"></div>
+                    ))}
+                  </div>
+                  
+                  <motion.h2 
+                    className="text-2xl handwritten-messy text-center text-blue-900 mb-4 relative z-10"
+                    animate={{ rotate: [0, 1, 0, -1, 0] }}
+                    transition={{ duration: 5, repeat: Infinity }}
+                  >
+                    Happy Birthday Dude! 🎂
+                  </motion.h2>
+                  
+                  <p className="handwritten text-gray-700 mb-3 relative z-10">
+                    Another year older and none the wiser! 😜 How does it feel to be officially ancient? Your bones creaking yet?
+                  </p>
+                  
+                  <p className="handwritten text-gray-700 mb-3 relative z-10">
+                    Just kidding (sorta). Enjoy your special day by leaving your wishes in the form below, and check your time capsule messages throughout the day!
+                  </p>
+                  
+                  <motion.div 
+                    className="text-center font-bold handwritten text-xl text-pink-600 mt-4"
+                    animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    PARTY MUBARAK! 🎉
+                  </motion.div>
+                </div>
                 
                 <WishForm onWishAdded={handleWishAdded} />
               </div>
-              
-              <div className="lg:w-1/4 flex flex-col items-end">
-                <TimeCapsule themeClass={themeClass} />
-              </div>
             </div>
           </main>
+          
+          {/* Time Capsule placed in top-right */}
+          <div className="fixed top-4 right-4 z-40">
+            <TimeCapsule themeClass={themeClass} />
+          </div>
           
           <Footer themeClass={themeClass} />
           

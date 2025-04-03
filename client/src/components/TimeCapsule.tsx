@@ -110,19 +110,58 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
     return () => clearInterval(interval);
   }, []);
   
+  // Function to get funny clock number
+  const getFunnyClockNumber = (num: number) => {
+    const funnyNumbers = [
+      '🎂', // 0
+      '🍰', // 1
+      '🎁', // 2
+      '🎈', // 3
+      '🎊', // 4
+      '🎉', // 5
+      '🥳', // 6
+      '🎇', // 7
+      '🎆', // 8
+      '🧁', // 9
+      '🥂', // 10
+      '🎵', // 11
+      '🍾', // 12
+      '💫', // 13
+      '✨', // 14
+      '🎸', // 15
+      '🎤', // 16
+      '🥁', // 17
+      '💃', // 18
+      '🕺', // 19
+      '🍕', // 20
+      '🌮', // 21
+      '🍦', // 22
+      '🍭', // 23
+    ];
+    
+    return num < funnyNumbers.length ? funnyNumbers[num] : num.toString();
+  };
+
   return (
-    <div className="w-full md:w-[350px] my-4 relative">
-      {/* Clock */}
-      <div className="mb-4 text-center">
+    <div className="w-[300px] relative">
+      {/* Clock - now more fun! */}
+      <div className="mb-4 text-right">
         <motion.div
-          className="inline-block p-3 bg-white rounded-full shadow-md"
-          animate={{ rotate: [0, 2, 0, -2, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="inline-block p-4 bg-white rounded-full shadow-lg border-4 border-pink-300"
+          animate={{ 
+            rotate: [0, 3, 0, -3, 0],
+            scale: [1, 1.05, 1, 1.05, 1]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
-          <div className="handwritten-messy text-3xl text-blue-900 font-bold">
-            {currentHour}:{currentMinute.toString().padStart(2, '0')}
+          <div className="handwritten-messy text-3xl text-blue-900 font-bold flex items-center justify-center">
+            <span className="text-2xl mr-1">{getFunnyClockNumber(currentHour)}</span>
+            <span className="animate-pulse mx-1">:</span>
+            <span className="text-2xl ml-1">{getFunnyClockNumber(Math.floor(currentMinute/10))}{getFunnyClockNumber(currentMinute%10)}</span>
           </div>
-          <div className="text-xs text-gray-500 italic">aging in real-time...</div>
+          <div className="text-xs text-pink-500 italic text-center font-bold">
+            birthday time!
+          </div>
         </motion.div>
       </div>
       
