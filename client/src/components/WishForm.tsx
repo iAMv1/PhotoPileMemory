@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { WISH_STYLES } from '@/lib/constants';
+import { WISH_STYLES, NOTE_SHAPES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import {
   Form,
@@ -25,11 +25,13 @@ import {
 
 const formSchema = z.object({
   text: z.string().min(1, { message: "Write something, duh!" }).max(100, { message: "Too long! Nobody wants to read your novel." }),
+  name: z.string().optional(),
   style: z.string().min(1, { message: "Pick a style, any style!" }),
   topPosition: z.number().int().min(0).max(100),
   leftPosition: z.number().int().min(0).max(100),
   rotation: z.number().int().min(-10).max(10),
-  fontSize: z.string()
+  fontSize: z.string(),
+  shape: z.string().optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -45,7 +47,9 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       text: "",
+      name: "",
       style: "comic",
+      shape: "square",
       topPosition: 0,
       leftPosition: 0,
       rotation: 0,
@@ -65,7 +69,9 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
       });
       form.reset({
         text: "",
+        name: "",
         style: "comic",
+        shape: "square",
         topPosition: 0,
         leftPosition: 0,
         rotation: 0,
@@ -83,6 +89,11 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
   });
   
   const onSubmit = (data: FormData) => {
+    // Set default name if not provided
+    if (!data.name || data.name.trim() === "") {
+      data.name = "anoni hea koi";
+    }
+    
     // Generate random positions if not set
     if (data.topPosition === 0) {
       data.topPosition = Math.floor(Math.random() * 80) + 10;
@@ -96,6 +107,12 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
     if (data.fontSize === "1rem") {
       const sizes = ["1rem", "1.25rem", "1.5rem", "1.75rem", "2rem"];
       data.fontSize = sizes[Math.floor(Math.random() * sizes.length)];
+    }
+    
+    // Assign random shape if not specified
+    if (!data.shape) {
+      const shapeIds = NOTE_SHAPES.map(shape => shape.id);
+      data.shape = shapeIds[Math.floor(Math.random() * shapeIds.length)];
     }
     
     wishMutation.mutate(data);
@@ -126,6 +143,23 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input 
+                          placeholder="your name (or leave empty for 'anoni hea koi')" 
+                          {...field} 
+                          className="w-full p-2 bg-transparent border-b-2 border-blue-300 border-dashed focus:ring-0 focus:border-blue-400 handwritten-input"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="text"
                   render={({ field }) => (
                     <FormItem>
@@ -141,32 +175,61 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
                   )}
                 />
                 
-                <FormField
-                  control={form.control}
-                  name="style"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
-                            <SelectValue placeholder="pick a handwriting style..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {WISH_STYLES.map((style) => (
-                            <SelectItem key={style.id} value={style.id}>
-                              {style.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="style"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
+                              <SelectValue placeholder="handwriting style..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {WISH_STYLES.map((style) => (
+                              <SelectItem key={style.id} value={style.id}>
+                                {style.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="shape"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
+                              <SelectValue placeholder="note shape..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {NOTE_SHAPES.map((shape) => (
+                              <SelectItem key={shape.id} value={shape.id}>
+                                {shape.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 
                 <Button 
                   type="submit" 

@@ -16,11 +16,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const wishes = pgTable("wishes", {
   id: serial("id").primaryKey(),
   text: text("text").notNull(),
+  name: text("name").default("anoni hea koi"),
   style: text("style").notNull(),
   topPosition: integer("top_position").notNull(),
   leftPosition: integer("left_position").notNull(),
   rotation: integer("rotation").notNull(),
   fontSize: text("font_size").notNull(),
+  shape: text("shape").default("square"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

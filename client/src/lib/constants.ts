@@ -16,6 +16,7 @@ export const DEFAULT_TIME_CAPSULE_MESSAGES = [
   { hour: 12, message: "Lunch time! Try not to choke on your cake, old timer! 🍰" },
   { hour: 15, message: "Afternoon check - still alive? Your back hurting yet? 👴" },
   { hour: 18, message: "Evening! Don't party too hard, you'll need your meds soon! 💊" },
+  { hour: 20, message: "You are aging! Look at those wrinkles forming as we speak! 👵" },
   { hour: 21, message: "Nearly bedtime, grandpa! Remember when you could stay up late? 🌙" }
 ];
 
@@ -56,4 +57,15 @@ export const PHOTO_EFFECTS = [
   { id: "shake", label: "Shake!", icon: "dizzy", color: "bg-lime-400" },
   { id: "spin", label: "Spin!", icon: "rotate-cw", color: "bg-orange-500" },
   { id: "confetti", label: "Confetti!", icon: "cake", color: "bg-yellow-400" }
+];
+
+// Note shapes for sticky notes
+export const NOTE_SHAPES = [
+  { id: "square", label: "Square", bgColor: "bg-yellow-200" },
+  { id: "rectangle", label: "Rectangle", bgColor: "bg-blue-200" },
+  { id: "circle", label: "Circle", bgColor: "bg-green-200" },
+  { id: "star", label: "Star", bgColor: "bg-purple-200" },
+  { id: "triangle", label: "Triangle", bgColor: "bg-pink-200" },
+  { id: "cloud", label: "Cloud", bgColor: "bg-cyan-200" },
+  { id: "heart", label: "Heart", bgColor: "bg-red-200" }
 ];

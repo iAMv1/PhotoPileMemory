@@ -166,20 +166,43 @@ const Home = () => {
                   </motion.div>
                 </div>
                 
-                <WishForm onWishAdded={handleWishAdded} />
+                {/* Forms and time capsule side by side */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                  <div className="md:w-1/2">
+                    <WishForm onWishAdded={handleWishAdded} />
+                  </div>
+                  <div className="md:w-1/2">
+                    <TimeCapsule themeClass={themeClass} />
+                  </div>
+                </div>
+                
+                {/* Sticky notes from friends */}
+                <div className="relative bg-white border-2 border-blue-200 rounded-lg p-4 shadow-lg mb-6 min-h-[600px]">
+                  <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={`board-col-${i}`} className="border-r border-blue-200"></div>
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={`board-row-${i}`} className="border-b border-blue-200"></div>
+                    ))}
+                  </div>
+                  
+                  <h2 className="text-xl font-bold handwritten text-blue-800 mb-4 relative z-10">
+                    Birthday Notes From Your "Friends"
+                  </h2>
+
+                  <div className="relative min-h-[550px]" id="sticky-notes-board">
+                    {/* Custom WishesDisplay component will render stickies inside this board */}
+                    <WishesDisplay refreshTrigger={wishRefreshTrigger} />
+                  </div>
+                </div>
               </div>
             </div>
           </main>
           
-          {/* Time Capsule placed in top-right */}
-          <div className="fixed top-4 right-4 z-40">
-            <TimeCapsule themeClass={themeClass} />
-          </div>
-          
           <Footer themeClass={themeClass} />
-          
-          {/* Floating elements */}
-          <WishesDisplay refreshTrigger={wishRefreshTrigger} />
           
           <Confetti 
             isActive={showConfetti} 
