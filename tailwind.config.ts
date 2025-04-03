@@ -79,10 +79,21 @@ export default {
             height: "0",
           },
         },
+        marquee: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '10%, 30%, 50%, 70%, 90%': { transform: 'rotate(-10deg)' },
+          '20%, 40%, 60%, 80%': { transform: 'rotate(10deg)' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "marquee": "marquee 15s linear infinite",
+        "shake": "shake 0.5s infinite",
       },
     },
   },

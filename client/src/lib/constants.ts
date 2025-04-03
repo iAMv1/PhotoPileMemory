@@ -12,11 +12,11 @@ export const PHOTOS = [
 
 // Default time capsule messages
 export const DEFAULT_TIME_CAPSULE_MESSAGES = [
-  { hour: 8, message: "Good morning! Starting your birthday off right! 🌞" },
-  { hour: 12, message: "Lunch time! Eat some cake! 🍰" },
-  { hour: 15, message: "Afternoon vibe check - still awesome! 🌈" },
-  { hour: 18, message: "Evening party time! 🎉" },
-  { hour: 21, message: "Late night birthday energy! 🌙" }
+  { hour: 8, message: "Congrats on waking up! That's harder at your age, isn't it? 💀" },
+  { hour: 12, message: "Lunch time! Try not to choke on your cake, old timer! 🍰" },
+  { hour: 15, message: "Afternoon check - still alive? Your back hurting yet? 👴" },
+  { hour: 18, message: "Evening! Don't party too hard, you'll need your meds soon! 💊" },
+  { hour: 21, message: "Nearly bedtime, grandpa! Remember when you could stay up late? 🌙" }
 ];
 
 // Konami code sequence
