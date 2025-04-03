@@ -1,7 +1,7 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWishSchema, insertTimeCapsuleMessageSchema } from "@shared/schema";
+import { insertWishSchema, insertTimeCapsuleMessageSchema, insertUserPhotoSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
@@ -91,6 +91,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         console.error("Error creating time capsule message:", error);
         res.status(500).json({ message: "Failed to create time capsule message" });
+      }
+    }
+  });
+  
+  // Get all user photos
+  apiRouter.get("/user-photos", async (req: Request, res: Response) => {
+    try {
+      const photos = await storage.getUserPhotos();
+      res.json({ photos });
+    } catch (error) {
+      console.error("Error getting user photos:", error);
+      res.status(500).json({ message: "Failed to get user photos" });
+    }
+  });
+  
+  // Create a new user photo
+  apiRouter.post("/user-photos", async (req: Request, res: Response) => {
+    try {
+      const photoData = insertUserPhotoSchema.parse(req.body);
+      const photo = await storage.createUserPhoto(photoData);
+      res.status(201).json({ photo });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating user photo:", error);
+        res.status(500).json({ message: "Failed to create user photo" });
       }
     }
   });

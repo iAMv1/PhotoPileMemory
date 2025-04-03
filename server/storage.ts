@@ -1,14 +1,19 @@
 import { 
   users, 
   wishes, 
-  timeCapsuleMessages, 
+  timeCapsuleMessages,
+  userPhotos,
   type User, 
   type InsertUser, 
   type Wish, 
   type InsertWish, 
   type TimeCapsuleMessage, 
-  type InsertTimeCapsuleMessage 
+  type InsertTimeCapsuleMessage,
+  type UserPhoto,
+  type InsertUserPhoto
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -23,90 +28,81 @@ export interface IStorage {
   getTimeCapsuleMessages(): Promise<TimeCapsuleMessage[]>;
   getTimeCapsuleMessageByHour(hour: number): Promise<TimeCapsuleMessage | undefined>;
   createTimeCapsuleMessage(message: InsertTimeCapsuleMessage): Promise<TimeCapsuleMessage>;
+  
+  getUserPhotos(): Promise<UserPhoto[]>;
+  createUserPhoto(photo: InsertUserPhoto): Promise<UserPhoto>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private wishes: Map<number, Wish>;
-  private timeCapsuleMessages: Map<number, TimeCapsuleMessage>;
-  userCurrentId: number;
-  wishCurrentId: number;
-  timeCapsuleMessageCurrentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.wishes = new Map();
-    this.timeCapsuleMessages = new Map();
-    this.userCurrentId = 1;
-    this.wishCurrentId = 1;
-    this.timeCapsuleMessageCurrentId = 1;
-    
-    // Initialize with default time capsule messages
-    this.initializeDefaultTimeCapsuleMessages();
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result.length ? result[0] : undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result.length ? result[0] : undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
   }
   
   async getWishes(): Promise<Wish[]> {
-    return Array.from(this.wishes.values());
+    return await db.select().from(wishes);
   }
   
   async createWish(insertWish: InsertWish): Promise<Wish> {
-    const id = this.wishCurrentId++;
-    const wish: Wish = { 
-      ...insertWish, 
-      id, 
-      createdAt: new Date() 
-    };
-    this.wishes.set(id, wish);
-    return wish;
+    const result = await db.insert(wishes).values(insertWish).returning();
+    return result[0];
   }
   
   async getTimeCapsuleMessages(): Promise<TimeCapsuleMessage[]> {
-    return Array.from(this.timeCapsuleMessages.values());
+    return await db.select().from(timeCapsuleMessages);
   }
   
   async getTimeCapsuleMessageByHour(hour: number): Promise<TimeCapsuleMessage | undefined> {
-    return Array.from(this.timeCapsuleMessages.values()).find(
-      (message) => message.hour === hour,
-    );
+    const result = await db.select().from(timeCapsuleMessages).where(eq(timeCapsuleMessages.hour, hour));
+    return result.length ? result[0] : undefined;
   }
   
   async createTimeCapsuleMessage(insertMessage: InsertTimeCapsuleMessage): Promise<TimeCapsuleMessage> {
-    const id = this.timeCapsuleMessageCurrentId++;
-    const message: TimeCapsuleMessage = { ...insertMessage, id };
-    this.timeCapsuleMessages.set(id, message);
-    return message;
+    const result = await db.insert(timeCapsuleMessages).values(insertMessage).returning();
+    return result[0];
   }
   
-  private async initializeDefaultTimeCapsuleMessages() {
-    const defaultMessages = [
-      { hour: 8, message: "Good morning! Starting your birthday off right! 🌞" },
-      { hour: 12, message: "Lunch time! Eat some cake! 🍰" },
-      { hour: 15, message: "Afternoon vibe check - still awesome! 🌈" },
-      { hour: 18, message: "Evening party time! 🎉" },
-      { hour: 21, message: "Late night birthday energy! 🌙" }
-    ];
-    
-    for (const message of defaultMessages) {
-      await this.createTimeCapsuleMessage(message);
+  async getUserPhotos(): Promise<UserPhoto[]> {
+    return await db.select().from(userPhotos);
+  }
+  
+  async createUserPhoto(insertPhoto: InsertUserPhoto): Promise<UserPhoto> {
+    const result = await db.insert(userPhotos).values(insertPhoto).returning();
+    return result[0];
+  }
+  
+  async initializeDefaultTimeCapsuleMessages() {
+    const existingMessages = await this.getTimeCapsuleMessages();
+    if (existingMessages.length === 0) {
+      const defaultMessages = [
+        { hour: 8, message: "Good morning! Starting your birthday off right! 🌞" },
+        { hour: 12, message: "Lunch time! Eat some cake! 🍰" },
+        { hour: 15, message: "Afternoon vibe check - still awesome! 🌈" },
+        { hour: 18, message: "Evening party time! 🎉" },
+        { hour: 21, message: "Late night birthday energy! 🌙" }
+      ];
+      
+      for (const message of defaultMessages) {
+        await this.createTimeCapsuleMessage(message);
+      }
     }
   }
 }
 
-export const storage = new MemStorage();
+// Initialize the database storage
+const storage = new DatabaseStorage();
+
+// Initialize default time capsule messages
+storage.initializeDefaultTimeCapsuleMessages().catch(console.error);
+
+export { storage };

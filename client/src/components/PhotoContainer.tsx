@@ -4,6 +4,8 @@ import { PHOTOS } from '@/lib/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, X, ImagePlus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface PhotoContainerProps {
   isDeepFried: boolean;
@@ -25,17 +27,53 @@ interface DraggablePhoto {
   isUserAdded?: boolean;
 }
 
+interface UserPhotoResponse {
+  photos: {
+    id: number;
+    src: string;
+    x: number;
+    y: number;
+    rotation: number;
+    zIndex: number;
+    createdAt: string;
+  }[];
+}
+
 const PhotoContainer: FC<PhotoContainerProps> = ({ 
   isDeepFried, 
   isGlitched, 
   photoEffects, 
   clearEffects 
 }) => {
+  const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<DraggablePhoto[]>([]);
   const [showUploadForm, setShowUploadForm] = useState<boolean>(false);
   const controls = useAnimation();
+
+  // Fetch user photos from the database
+  const { data: userPhotosData, isLoading: isLoadingPhotos } = useQuery<UserPhotoResponse>({
+    queryKey: ['/api/user-photos'],
+    enabled: true,
+  });
+
+  // Mutation for saving a new photo
+  const createPhotoMutation = useMutation({
+    mutationFn: async (photoData: {
+      src: string;
+      x: number;
+      y: number;
+      rotation: number;
+      zIndex: number;
+    }) => {
+      return await apiRequest('POST', '/api/user-photos', photoData);
+    },
+    onSuccess: () => {
+      // Invalidate the user photos query to refetch the latest data
+      queryClient.invalidateQueries({ queryKey: ['/api/user-photos'] });
+    },
+  });
   
   // Initialize photos with random positions
   useEffect(() => {
@@ -43,6 +81,7 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
       
+      // Start with default photos
       const initialPhotos = PHOTOS.map((src, index) => {
         const randomX = Math.floor(Math.random() * (containerWidth - 200));
         const randomY = Math.floor(Math.random() * (containerHeight - 200));
@@ -58,9 +97,25 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
         };
       });
       
-      setPhotos(initialPhotos);
+      // Add user photos from the database if available
+      if (userPhotosData && userPhotosData.photos.length > 0) {
+        const userPhotos = userPhotosData.photos.map(photo => ({
+          id: photo.id,
+          src: photo.src,
+          x: photo.x,
+          y: photo.y,
+          rotation: photo.rotation,
+          zIndex: photo.zIndex,
+          isUserAdded: true
+        }));
+        
+        // Combine default photos with user photos
+        setPhotos([...initialPhotos, ...userPhotos]);
+      } else {
+        setPhotos(initialPhotos);
+      }
     }
-  }, []);
+  }, [userPhotosData]);
   
   // Handle window resize by repositioning photos
   useEffect(() => {
@@ -152,40 +207,57 @@ const PhotoContainer: FC<PhotoContainerProps> = ({
         return;
       }
       
-      // Create a URL for the image
-      const imageUrl = URL.createObjectURL(file);
+      // Convert the file to a base64 string for storage
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target && event.target.result) {
+          const imageUrl = event.target.result as string;
+          
+          // Add the new photo
+          if (containerRef.current) {
+            const containerWidth = containerRef.current.clientWidth;
+            const containerHeight = containerRef.current.clientHeight;
+            
+            const randomX = Math.floor(Math.random() * (containerWidth - 200));
+            const randomY = Math.floor(Math.random() * (containerHeight - 200));
+            const randomRotation = Math.floor(Math.random() * 20) - 10;
+            
+            // Create new photo with highest Z-index
+            const maxZIndex = photos.length > 0 ? Math.max(...photos.map(p => p.zIndex)) : 0;
+            const zIndex = maxZIndex + 1;
+            
+            // Create the photo data for saving
+            const photoData = {
+              src: imageUrl,
+              x: randomX,
+              y: randomY,
+              rotation: randomRotation,
+              zIndex
+            };
+            
+            // Save to database
+            createPhotoMutation.mutate(photoData);
+            
+            // Temporarily add to UI (will be refreshed when query invalidates)
+            const newPhoto: DraggablePhoto = {
+              id: Date.now(), // Temporary ID, will be replaced with DB ID
+              ...photoData,
+              isUserAdded: true
+            };
+            
+            setPhotos(prev => [...prev, newPhoto]);
+          }
+          
+          // Reset file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          
+          setShowUploadForm(false);
+        }
+      };
       
-      // Add the new photo
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth;
-        const containerHeight = containerRef.current.clientHeight;
-        
-        const randomX = Math.floor(Math.random() * (containerWidth - 200));
-        const randomY = Math.floor(Math.random() * (containerHeight - 200));
-        const randomRotation = Math.floor(Math.random() * 20) - 10;
-        
-        // Create new photo with highest Z-index
-        const maxZIndex = photos.length > 0 ? Math.max(...photos.map(p => p.zIndex)) : 0;
-        
-        const newPhoto: DraggablePhoto = {
-          id: Date.now(), // Use timestamp as unique ID
-          src: imageUrl,
-          x: randomX,
-          y: randomY,
-          rotation: randomRotation,
-          zIndex: maxZIndex + 1,
-          isUserAdded: true
-        };
-        
-        setPhotos(prev => [...prev, newPhoto]);
-      }
-      
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      setShowUploadForm(false);
+      reader.readAsDataURL(file);
     }
   };
   

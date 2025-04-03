@@ -39,6 +39,21 @@ export const insertTimeCapsuleMessageSchema = createInsertSchema(timeCapsuleMess
   id: true,
 });
 
+export const userPhotos = pgTable("user_photos", {
+  id: serial("id").primaryKey(),
+  src: text("src").notNull(),
+  x: integer("x").notNull(),
+  y: integer("y").notNull(),
+  rotation: integer("rotation").notNull(),
+  zIndex: integer("z_index").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserPhotoSchema = createInsertSchema(userPhotos).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -47,3 +62,6 @@ export type Wish = typeof wishes.$inferSelect;
 
 export type InsertTimeCapsuleMessage = z.infer<typeof insertTimeCapsuleMessageSchema>;
 export type TimeCapsuleMessage = typeof timeCapsuleMessages.$inferSelect;
+
+export type InsertUserPhoto = z.infer<typeof insertUserPhotoSchema>;
+export type UserPhoto = typeof userPhotos.$inferSelect;
