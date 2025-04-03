@@ -22,11 +22,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const formSchema = z.object({
-  text: z.string().min(1, { message: "Please enter a wish" }).max(100, { message: "Wish is too long (max 100 characters)" }),
-  style: z.string().min(1, { message: "Please select a style" }),
+  text: z.string().min(1, { message: "Write something, duh!" }).max(100, { message: "Too long! Nobody wants to read your novel." }),
+  style: z.string().min(1, { message: "Pick a style, any style!" }),
   topPosition: z.number().int().min(0).max(100),
   leftPosition: z.number().int().min(0).max(100),
   rotation: z.number().int().min(-10).max(10),
@@ -61,8 +60,8 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['/api/wishes'] });
       toast({
-        title: "Wish added!",
-        description: "Your birthday wish is now floating!",
+        title: "Note Passed!",
+        description: "Your embarrassing note is now floating around for everyone to see.",
       });
       form.reset({
         text: "",
@@ -76,8 +75,8 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
     },
     onError: (error) => {
       toast({
-        title: "Error adding wish",
-        description: error.message,
+        title: "Failed miserably",
+        description: error.message || "Your note was too lame to even post",
         variant: "destructive"
       });
     }
@@ -103,68 +102,88 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
   };
   
   return (
-    <Card className="max-w-md mx-auto my-8 bg-gradient-to-r from-fuchsia-500 to-cyan-400 shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-white">Add Your Birthday Wish!</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="text"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input 
-                      placeholder="Your birthday wish here..." 
-                      {...field} 
-                      className="w-full p-2 rounded text-black"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="style"
-              render={({ field }) => (
-                <FormItem>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full p-2 rounded text-black bg-white">
-                        <SelectValue placeholder="Select a style" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {WISH_STYLES.map((style) => (
-                        <SelectItem key={style.id} value={style.id}>
-                          {style.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-lime-400 text-black font-bold py-2 px-4 rounded hover:bg-lime-300 transition-colors"
-              disabled={wishMutation.isPending}
-            >
-              {wishMutation.isPending ? "ADDING..." : "MAKE IT FLOAT!"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+    <div className="max-w-md mx-auto my-8">
+      <div className="bg-blue-50 border-2 border-blue-200 shadow-xl p-4 relative overflow-hidden notebook-paper">
+        {/* Graph paper lines created with CSS grid in background */}
+        <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={`col-${i}`} className="border-r border-blue-200"></div>
+          ))}
+        </div>
+        <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div key={`row-${i}`} className="border-b border-blue-200"></div>
+          ))}
+        </div>
+        
+        {/* Red margin line */}
+        <div className="absolute top-0 bottom-0 left-10 border-l-2 border-red-400"></div>
+        
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold text-blue-900 ml-12 mb-4 handwritten">Add Your Note</h2>
+          <div className="ml-12">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input 
+                          placeholder="write something embarrassing..." 
+                          {...field} 
+                          className="w-full p-2 bg-transparent border-b-2 border-blue-300 border-dashed focus:ring-0 focus:border-blue-400 handwritten-input"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="style"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full p-2 bg-transparent border-2 border-blue-300 handwritten-input">
+                            <SelectValue placeholder="pick a handwriting style..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {WISH_STYLES.map((style) => (
+                            <SelectItem key={style.id} value={style.id}>
+                              {style.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-amber-100 text-blue-900 font-bold py-2 px-4 border-2 border-amber-300 hover:bg-amber-200 transition-colors handwritten"
+                  disabled={wishMutation.isPending}
+                >
+                  {wishMutation.isPending ? "PASSING NOTE..." : "PASS THIS NOTE!"}
+                </Button>
+              </form>
+            </Form>
+            <div className="text-xs text-gray-500 mt-2 text-right">
+              *pretend this is folded up like in middle school*
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

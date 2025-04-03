@@ -35,10 +35,10 @@ export const KONAMI_CODE = [
 
 // Wish style options
 export const WISH_STYLES = [
-  { id: "comic", label: "Comic Style", fontFamily: "'Comic Sans MS', cursive", color: "#FFA500" },
-  { id: "impact", label: "MEME STYLE", fontFamily: "Impact, sans-serif", color: "#FFFFFF", textShadow: "2px 2px 0 #000" },
-  { id: "retro", label: "Retro Style", fontFamily: "'VT323', monospace", color: "#00FF00" },
-  { id: "rainbow", label: "Rainbow Style", fontFamily: "'Comic Sans MS', cursive", isRainbow: true }
+  { id: "comic", label: "Casual Handwriting", fontFamily: "'Indie Flower', cursive", color: "#3B82F6" },
+  { id: "impact", label: "ATTENTION GRABBING", fontFamily: "'Permanent Marker', cursive", color: "#EF4444", textShadow: "1px 1px 0 #000" },
+  { id: "retro", label: "Neat Handwriting", fontFamily: "'Shadows Into Light', cursive", color: "#059669" },
+  { id: "rainbow", label: "Rainbow Gel Pen", fontFamily: "'Indie Flower', cursive", isRainbow: true }
 ];
 
 // App theme modes
