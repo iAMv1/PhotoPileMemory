@@ -6,15 +6,38 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  displayName: text("display_name"),
+  birthday: timestamp("birthday"),
+  bio: text("bio"),
+  themeColor: text("theme_color").default("#3B82F6"),
+  isPrivate: boolean("is_private").default(false),
+  pagePassword: text("page_password"),
+  customMessage: text("custom_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  viewCount: integer("view_count").default(0),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  viewCount: true,
+});
+
+export const loginUserSchema = z.object({
+  username: z.string().min(3).max(50),
+  password: z.string().min(6),
+});
+
+export const registerUserSchema = z.object({
+  username: z.string().min(3).max(50),
+  password: z.string().min(6),
+  displayName: z.string().optional(),
+  birthday: z.string().optional(),
 });
 
 export const wishes = pgTable("wishes", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
   text: text("text").notNull(),
   name: text("name").default("anoni hea koi"),
   style: text("style").notNull(),
@@ -33,6 +56,7 @@ export const insertWishSchema = createInsertSchema(wishes).omit({
 
 export const timeCapsuleMessages = pgTable("time_capsule_messages", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
   hour: integer("hour").notNull(),
   message: text("message").notNull(),
 });
@@ -43,6 +67,7 @@ export const insertTimeCapsuleMessageSchema = createInsertSchema(timeCapsuleMess
 
 export const userPhotos = pgTable("user_photos", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
   src: text("src").notNull(),
   x: integer("x").notNull(),
   y: integer("y").notNull(),

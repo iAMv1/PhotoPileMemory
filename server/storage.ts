@@ -13,7 +13,7 @@ import {
   type InsertUserPhoto
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -21,15 +21,17 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
-  getWishes(): Promise<Wish[]>;
+  updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  incrementViewCount(userId: number): Promise<void>;
+
+  getWishes(userId?: number): Promise<Wish[]>;
   createWish(wish: InsertWish): Promise<Wish>;
-  
-  getTimeCapsuleMessages(): Promise<TimeCapsuleMessage[]>;
-  getTimeCapsuleMessageByHour(hour: number): Promise<TimeCapsuleMessage | undefined>;
+
+  getTimeCapsuleMessages(userId?: number): Promise<TimeCapsuleMessage[]>;
+  getTimeCapsuleMessageByHour(hour: number, userId?: number): Promise<TimeCapsuleMessage | undefined>;
   createTimeCapsuleMessage(message: InsertTimeCapsuleMessage): Promise<TimeCapsuleMessage>;
-  
-  getUserPhotos(): Promise<UserPhoto[]>;
+
+  getUserPhotos(userId?: number): Promise<UserPhoto[]>;
   createUserPhoto(photo: InsertUserPhoto): Promise<UserPhoto>;
 }
 
@@ -48,8 +50,25 @@ export class DatabaseStorage implements IStorage {
     const result = await db.insert(users).values(insertUser).returning();
     return result[0];
   }
-  
-  async getWishes(): Promise<Wish[]> {
+
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+    const result = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return result.length ? result[0] : undefined;
+  }
+
+  async incrementViewCount(userId: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (user) {
+      await db.update(users)
+        .set({ viewCount: (user.viewCount || 0) + 1 })
+        .where(eq(users.id, userId));
+    }
+  }
+
+  async getWishes(userId?: number): Promise<Wish[]> {
+    if (userId) {
+      return await db.select().from(wishes).where(eq(wishes.userId, userId));
+    }
     return await db.select().from(wishes);
   }
   
@@ -58,12 +77,32 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
-  async getTimeCapsuleMessages(): Promise<TimeCapsuleMessage[]> {
+  async getTimeCapsuleMessages(userId?: number): Promise<TimeCapsuleMessage[]> {
+    if (userId) {
+      return await db.select().from(timeCapsuleMessages).where(eq(timeCapsuleMessages.userId, userId));
+    }
     return await db.select().from(timeCapsuleMessages);
   }
-  
-  async getTimeCapsuleMessageByHour(hour: number): Promise<TimeCapsuleMessage | undefined> {
-    const result = await db.select().from(timeCapsuleMessages).where(eq(timeCapsuleMessages.hour, hour));
+
+  async getTimeCapsuleMessageByHour(hour: number, userId?: number): Promise<TimeCapsuleMessage | undefined> {
+    if (userId) {
+      const result = await db.select()
+        .from(timeCapsuleMessages)
+        .where(and(
+          eq(timeCapsuleMessages.hour, hour),
+          eq(timeCapsuleMessages.userId, userId)
+        ));
+      if (result.length) return result[0];
+    }
+
+    // Fallback to default messages (userId = null)
+    const result = await db.select()
+      .from(timeCapsuleMessages)
+      .where(and(
+        eq(timeCapsuleMessages.hour, hour),
+        isNull(timeCapsuleMessages.userId)
+      ))
+      .limit(1);
     return result.length ? result[0] : undefined;
   }
   
@@ -72,7 +111,10 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
-  async getUserPhotos(): Promise<UserPhoto[]> {
+  async getUserPhotos(userId?: number): Promise<UserPhoto[]> {
+    if (userId) {
+      return await db.select().from(userPhotos).where(eq(userPhotos.userId, userId));
+    }
     return await db.select().from(userPhotos);
   }
   
