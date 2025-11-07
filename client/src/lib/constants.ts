@@ -1,5 +1,16 @@
 // Photo sources for the image stack
-export const PHOTOS: string[] = [];
+export const PHOTOS: string[] = [
+  "/image_1743649972817.png",
+  "/image_1743650935031.png",
+  "/image_1743651265192.png",
+  "/image_1743651795313.png",
+  "/image_1743654229354.png",
+  "/image_1743659895899.png",
+  "/image_1743660338271.png",
+  "/image_1743660896765.png",
+  "/image_1743663228577.png",
+  "/image_1743664398969.png"
+];
 
 // Default time capsule messages
 export const DEFAULT_TIME_CAPSULE_MESSAGES = [
