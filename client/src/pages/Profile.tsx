@@ -97,16 +97,16 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-4">
-      <div className="container mx-auto max-w-3xl py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <Link href={`/birthday/${user.username}`}>
-            <Button variant="outline">
+    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-4 sm:p-6 lg:p-8">
+      <div className="container mx-auto max-w-3xl py-4 sm:py-8">
+        <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 sm:justify-between">
+          <Link href={`/birthday/${user.username}`} className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Birthday Page
             </Button>
           </Link>
-          <Button variant="destructive" onClick={handleLogout}>
+          <Button variant="destructive" onClick={handleLogout} className="w-full sm:w-auto">
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>

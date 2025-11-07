@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
+import MobileNav from '@/components/MobileNav';
 import PhotoCarousel from '@/components/PhotoCarousel';
 import WishForm from '@/components/WishForm';
 import WishesDisplay from '@/components/WishesDisplay';
@@ -110,11 +111,12 @@ const Home = () => {
         <AgeVerification onComplete={handleAgeVerificationComplete} />
       ) : (
         <>
+          <MobileNav />
           <Header themeClass={themeClass} />
-          
-          {/* Birthday-themed text sprinkled around - Reduced for better spacing */}
-          <div className="absolute top-24 left-8 rotate-[-15deg] z-10">
-            <motion.div 
+
+          {/* Birthday-themed text sprinkled around - Hidden on mobile for better UX */}
+          <div className="hidden lg:block absolute top-24 left-8 rotate-[-15deg] z-10">
+            <motion.div
               className="text-xl handwritten text-purple-600 font-bold"
               animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
               transition={{ duration: 2, repeat: Infinity }}
@@ -122,9 +124,9 @@ const Home = () => {
               Ek saal aur khatam!!
             </motion.div>
           </div>
-          
-          <div className="absolute top-12 right-16 rotate-[-8deg] z-10">
-            <motion.div 
+
+          <div className="hidden lg:block absolute top-12 right-16 rotate-[-8deg] z-10">
+            <motion.div
               className="text-xl handwritten text-orange-500 font-bold"
               animate={{ y: [0, -5, 0], opacity: [0.8, 1, 0.8] }}
               transition={{ duration: 2.8, repeat: Infinity }}
@@ -132,10 +134,10 @@ const Home = () => {
               Kitne saal ka hua re tu?
             </motion.div>
           </div>
-          
+
           {/* BOTTOM SECTION messages */}
-          <div className="absolute bottom-20 left-20 rotate-[-5deg] z-10">
-            <motion.div 
+          <div className="hidden lg:block absolute bottom-20 left-20 rotate-[-5deg] z-10">
+            <motion.div
               className="text-xl handwritten text-red-500 font-bold"
               animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
               transition={{ duration: 3, repeat: Infinity }}
@@ -143,9 +145,9 @@ const Home = () => {
               Buddha ho gaya tu!
             </motion.div>
           </div>
-          
-          <div className="absolute bottom-48 left-1/2 rotate-[8deg] z-10">
-            <motion.div 
+
+          <div className="hidden lg:block absolute bottom-48 left-1/2 rotate-[8deg] z-10">
+            <motion.div
               className="text-2xl handwritten text-indigo-600 font-bold"
               animate={{ x: [0, 10, 0, -10, 0], opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 4.5, repeat: Infinity }}

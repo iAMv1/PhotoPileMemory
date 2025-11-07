@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth, User } from '@/lib/auth';
 import Header from '@/components/Header';
+import MobileNav from '@/components/MobileNav';
 import PhotoCarousel from '@/components/PhotoCarousel';
 import WishForm from '@/components/WishForm';
 import WishesDisplay from '@/components/WishesDisplay';
@@ -156,14 +157,14 @@ export default function BirthdayPage() {
   return (
     <div className={`min-h-screen bg-dark text-light ${themeClass} ${konamiActive ? 'rainbow-bg' : ''}`}>
       {showConfetti && <Confetti isActive={showConfetti} />}
-
+      <MobileNav />
       <Header themeClass={themeClass} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* User Info Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <motion.h1
-            className="text-4xl md:text-6xl font-bold mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 px-2"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200 }}
@@ -173,7 +174,7 @@ export default function BirthdayPage() {
 
           {birthdayUser.customMessage && (
             <motion.p
-              className="text-xl text-gray-300 mb-4"
+              className="text-base sm:text-lg md:text-xl text-gray-300 mb-4 px-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -183,9 +184,9 @@ export default function BirthdayPage() {
           )}
 
           {isOwner && (
-            <div className="flex items-center justify-center gap-4 mt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-4">
               <Link href="/profile">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <Settings className="w-4 h-4 mr-2" />
                   Manage Page
                 </Button>
@@ -199,7 +200,7 @@ export default function BirthdayPage() {
         </div>
 
         {/* Photo Carousel */}
-        <section className="mb-12">
+        <section className="mb-8 sm:mb-12">
           <PhotoCarousel
             isDeepFried={isDeepFried}
             isGlitched={isGlitched}
@@ -208,13 +209,13 @@ export default function BirthdayPage() {
         </section>
 
         {/* Time Capsule */}
-        <section className="mb-12">
+        <section className="mb-8 sm:mb-12">
           <TimeCapsule userId={birthdayUser.id} />
         </section>
 
         {/* Birthday Wishes */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-6 text-center">Birthday Wishes 💌</h2>
+        <section className="mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center px-4">Birthday Wishes 💌</h2>
           <WishForm onWishAdded={handleWishAdded} userId={birthdayUser.id} />
           <WishesDisplay refreshTrigger={wishRefreshTrigger} userId={birthdayUser.id} />
         </section>
