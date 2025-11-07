@@ -18,7 +18,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 interface TimeCapsuleProps {
-  themeClass: string;
+  themeClass?: string;
+  userId?: number;
 }
 
 interface TimeCapsuleMessage {
@@ -44,14 +45,20 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
+const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass, userId }) => {
   const { toast } = useToast();
   const [currentHour, setCurrentHour] = useState<number>(new Date().getHours());
   const [currentMinute, setCurrentMinute] = useState<number>(new Date().getMinutes());
   const [showForm, setShowForm] = useState<boolean>(false);
   
   const { data, isLoading } = useQuery<TimeCapsuleResponse>({
-    queryKey: ['/api/time-capsule-messages/current'],
+    queryKey: userId ? [`/api/time-capsule-messages/current?userId=${userId}`] : ['/api/time-capsule-messages/current'],
+    queryFn: async () => {
+      const url = userId ? `/api/time-capsule-messages/current?userId=${userId}` : '/api/time-capsule-messages/current';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch time capsule message');
+      return response.json();
+    },
     refetchOnWindowFocus: false,
   });
   
@@ -67,22 +74,24 @@ const TimeCapsule: FC<TimeCapsuleProps> = ({ themeClass }) => {
   const messageMutation = useMutation({
     mutationFn: async (data: FormData) => {
       // Combine the message and author name
-      const finalMessage = data.authorName && data.authorName.trim() !== "" 
-        ? `${data.message} - from ${data.authorName}` 
+      const finalMessage = data.authorName && data.authorName.trim() !== ""
+        ? `${data.message} - from ${data.authorName}`
         : data.message;
-      
+
       // Send only hour and message to match database schema
       return apiRequest('/api/time-capsule-messages', {
         method: 'POST',
         body: {
           hour: data.hour,
-          message: finalMessage
+          message: finalMessage,
+          userId
         }
       });
     },
     onSuccess: async () => {
+      const queryKey = userId ? [`/api/time-capsule-messages/current?userId=${userId}`] : ['/api/time-capsule-messages/current'];
       await queryClient.invalidateQueries({ queryKey: ['/api/time-capsule-messages'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/time-capsule-messages/current'] });
+      await queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Message Scheduled!",
         description: "Your message has been added to the time capsule.",

@@ -38,9 +38,10 @@ type FormData = z.infer<typeof formSchema>;
 
 interface WishFormProps {
   onWishAdded: () => void;
+  userId?: number;
 }
 
-const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
+const WishForm: FC<WishFormProps> = ({ onWishAdded, userId }) => {
   const { toast } = useToast();
   
   const form = useForm<FormData>({
@@ -61,11 +62,12 @@ const WishForm: FC<WishFormProps> = ({ onWishAdded }) => {
     mutationFn: async (data: FormData) => {
       return apiRequest('/api/wishes', {
         method: 'POST',
-        body: data
+        body: { ...data, userId }
       });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['/api/wishes'] });
+      const queryKey = userId ? [`/api/wishes?userId=${userId}`] : ['/api/wishes'];
+      await queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Note Passed!",
         description: "Your embarrassing note is now floating around for everyone to see.",

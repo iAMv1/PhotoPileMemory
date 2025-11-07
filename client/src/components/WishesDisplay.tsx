@@ -21,11 +21,18 @@ interface WishResponse {
 
 interface WishesDisplayProps {
   refreshTrigger: number;
+  userId?: number;
 }
 
-const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
+const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger, userId }) => {
   const { data, isLoading, refetch } = useQuery<WishResponse>({
-    queryKey: ['/api/wishes'],
+    queryKey: userId ? [`/api/wishes?userId=${userId}`] : ['/api/wishes'],
+    queryFn: async () => {
+      const url = userId ? `/api/wishes?userId=${userId}` : '/api/wishes';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch wishes');
+      return response.json();
+    },
     refetchOnWindowFocus: false,
   });
 

@@ -11,6 +11,7 @@ import { queryClient } from '@/lib/queryClient';
 interface PhotoCarouselProps {
   isDeepFried: boolean;
   isGlitched: boolean;
+  userId?: number;
 }
 
 interface DraggablePhoto {
@@ -23,7 +24,7 @@ interface DraggablePhoto {
   comment?: string;
 }
 
-const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
+const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched, userId }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [photos, setPhotos] = useState<DraggablePhoto[]>([]);
@@ -32,12 +33,13 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
   const [isSlideshow, setIsSlideshow] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [newPhotoComment, setNewPhotoComment] = useState('');
-  
+
   // Query to fetch user uploaded photos
   const { data: userPhotosData, isLoading } = useQuery({
-    queryKey: ['/api/user-photos'],
+    queryKey: userId ? [`/api/user-photos?userId=${userId}`] : ['/api/user-photos'],
     queryFn: async () => {
-      return await apiRequest<{ photos: DraggablePhoto[] }>('/api/user-photos');
+      const url = userId ? `/api/user-photos?userId=${userId}` : '/api/user-photos';
+      return await apiRequest<{ photos: DraggablePhoto[] }>(url);
     },
   });
 
@@ -50,14 +52,16 @@ const PhotoCarousel: FC<PhotoCarouselProps> = ({ isDeepFried, isGlitched }) => {
       rotation: number;
       zIndex: number;
       comment?: string;
+      userId?: number;
     }) => {
       return await apiRequest('/api/user-photos', {
         method: 'POST',
-        body: photoData,
+        body: { ...photoData, userId },
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user-photos'] });
+      const queryKey = userId ? [`/api/user-photos?userId=${userId}`] : ['/api/user-photos'];
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 
