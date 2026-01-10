@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
-import PhotoCarousel from '@/components/PhotoCarousel';
-import WishForm from '@/components/WishForm';
 import WishesDisplay from '@/components/WishesDisplay';
-import TimeCapsule from '@/components/TimeCapsule';
+import { TimeCapsuleViewer } from '@/components/TimeCapsuleViewer';
 import Footer from '@/components/Footer';
 import Confetti from '@/components/Confetti';
-import AgeVerification from '@/components/AgeVerification';
 import useKonamiCode from '@/hooks/useKonamiCode';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import { Play, Pause } from 'lucide-react';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -20,295 +19,387 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+interface Photo {
+  id: number;
+  src: string;
+  contributorName?: string;
+  voiceNote?: string;
+  memoryClue?: string;
+  rotation?: number;
+}
+
 const Home = () => {
   const { toast } = useToast();
-  const [themeClass, setThemeClass] = useState<string>('');
   const [showConfetti, setShowConfetti] = useState<boolean>(true);
-  const [isDeepFried, setIsDeepFried] = useState<boolean>(false);
-  const [isGlitched, setIsGlitched] = useState<boolean>(false);
-  const [photoEffects, setPhotoEffects] = useState<{shake: boolean; spin: boolean}>({
-    shake: false,
-    spin: false
-  });
   const [konamiDialogOpen, setKonamiDialogOpen] = useState(false);
   const [konamiActive, setKonamiActive] = useState(false);
-  const [wishRefreshTrigger, setWishRefreshTrigger] = useState(0);
-  const [showAgeVerification, setShowAgeVerification] = useState<boolean>(true);
   const [userAge, setUserAge] = useState<number>(0);
-  
-  // Initial confetti when page loads after age verification
+  const [userName, setUserName] = useState<string>("");
+  const [playingVoice, setPlayingVoice] = useState<number | null>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  // Fetch photos from API
+  const { data: photosData } = useQuery({
+    queryKey: ["user-photos"],
+    queryFn: async () => {
+      const res = await fetch("/api/user-photos");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  // Check if time capsule has messages
+  const { data: capsuleData } = useQuery({
+    queryKey: ["time-capsule-messages"],
+    queryFn: async () => {
+      const res = await fetch("/api/time-capsule-messages");
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
+  });
+
+  const photos: Photo[] = photosData?.photos || [];
+  const hasCapsuleMessages = (capsuleData?.messages || []).length > 0;
+
+  // Get verified age and name from localStorage
   useEffect(() => {
-    if (!showAgeVerification) {
-      const timer = setTimeout(() => {
-        setShowConfetti(false);
-      }, 3000);
-      
-      return () => clearTimeout(timer);
+    const verifiedAge = localStorage.getItem("verified_age");
+    const birthdayName = localStorage.getItem("birthday_person_name");
+    if (verifiedAge) {
+      setUserAge(parseInt(verifiedAge) || 0);
+      setShowConfetti(true);
     }
-  }, [showAgeVerification]);
-  
-  // Simple effects for the PhotoCarousel
-  const toggleDeepFried = () => {
-    setIsDeepFried(prev => !prev);
+    if (birthdayName) {
+      setUserName(birthdayName);
+    }
+  }, []);
+
+  // Auto-hide confetti after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowConfetti(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Play voice note
+  const playVoiceNote = (photoId: number, voiceNote: string) => {
+    if (playingVoice === photoId) {
+      setPlayingVoice(null);
+      return;
+    }
+    setPlayingVoice(photoId);
+    const audio = new Audio(voiceNote);
+    audio.onended = () => setPlayingVoice(null);
+    audio.play();
   };
-  
-  const toggleGlitch = () => {
-    setIsGlitched(prev => !prev);
-  };
-  
-  // Handle age verification completion
-  const handleAgeVerificationComplete = (age: number) => {
-    setUserAge(age);
-    setShowAgeVerification(false);
-    setShowConfetti(true);
-    
-    // Show age-related toast message
-    toast({
-      title: `Congrats on turning ${age}!`,
-      description: age > 30 ? "You're practically a fossil now!" : "Still young, but aging rapidly!",
-      variant: "default",
-    });
-  };
-  
-  // Handle wish added
-  const handleWishAdded = () => {
-    setWishRefreshTrigger(prev => prev + 1);
-  };
-  
-  // Handle photo effect changes
-  const handlePhotoEffectChange = (effectId: string) => {
-    if (effectId === 'shake') {
-      setPhotoEffects(prev => ({ ...prev, shake: !prev.shake }));
-    } else if (effectId === 'spin') {
-      setPhotoEffects(prev => ({ ...prev, spin: !prev.spin }));
-    } else if (effectId === 'deep-fry') {
-      setIsDeepFried(prev => !prev);
-    } else if (effectId === 'glitch') {
-      setIsGlitched(prev => !prev);
+
+  // Photo navigation
+  const nextPhoto = () => {
+    if (photos.length > 0) {
+      setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
     }
   };
-  
+
+  const prevPhoto = () => {
+    if (photos.length > 0) {
+      setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    }
+  };
+
   // Konami code handler
   const handleKonamiCode = () => {
     setKonamiDialogOpen(true);
     setKonamiActive(true);
     setShowConfetti(true);
-    
     toast({
       title: "KONAMI CODE ACTIVATED!",
       description: "YOU ARE GAMING ROYALTY!",
-      variant: "default",
     });
   };
-  
-  // Setup Konami code detection
-  useKonamiCode(handleKonamiCode);
-  
-  return (
-    <div className={konamiActive ? 'rainbow-bg min-h-screen' : 'min-h-screen'}>
-      {showAgeVerification ? (
-        <AgeVerification onComplete={handleAgeVerificationComplete} />
-      ) : (
-        <>
-          <Header themeClass={themeClass} />
-          
-          {/* Birthday-themed text sprinkled around - Reduced for better spacing */}
-          <div className="absolute top-24 left-8 rotate-[-15deg] z-10">
-            <motion.div 
-              className="text-xl handwritten text-purple-600 font-bold"
-              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              Ek saal aur khatam!!
-            </motion.div>
-          </div>
-          
-          <div className="absolute top-12 right-16 rotate-[-8deg] z-10">
-            <motion.div 
-              className="text-xl handwritten text-orange-500 font-bold"
-              animate={{ y: [0, -5, 0], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 2.8, repeat: Infinity }}
-            >
-              Kitne saal ka hua re tu?
-            </motion.div>
-          </div>
-          
-          {/* BOTTOM SECTION messages */}
-          <div className="absolute bottom-20 left-20 rotate-[-5deg] z-10">
-            <motion.div 
-              className="text-xl handwritten text-red-500 font-bold"
-              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              Buddha ho gaya tu!
-            </motion.div>
-          </div>
-          
-          <div className="absolute bottom-48 left-1/2 rotate-[8deg] z-10">
-            <motion.div 
-              className="text-2xl handwritten text-indigo-600 font-bold"
-              animate={{ x: [0, 10, 0, -10, 0], opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 4.5, repeat: Infinity }}
-            >
-              Janamdin ki shubhkamnayein!
-            </motion.div>
-          </div>
-          
-          {/* Main content */}
-          <main className="container mx-auto px-4">
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="lg:w-1/2">
-                <PhotoCarousel 
-                  isDeepFried={isDeepFried} 
-                  isGlitched={isGlitched} 
-                />
-              </div>
-              
-              <div className="lg:w-1/2 flex flex-col">
-                <div className="mb-6 p-4 bg-white rounded-lg shadow-lg relative notebook-paper">
-                  {/* Paper styling */}
-                  <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={`note-col-${i}`} className="border-r border-blue-200"></div>
-                    ))}
-                  </div>
-                  <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-30 pointer-events-none">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={`note-row-${i}`} className="border-b border-blue-200"></div>
-                    ))}
-                  </div>
-                  
-                  <motion.h2 
-                    className="text-2xl handwritten-messy text-center text-blue-900 mb-4 relative z-10"
-                    animate={{ rotate: [0, 1, 0, -1, 0] }}
-                    transition={{ duration: 5, repeat: Infinity }}
-                  >
-                    Happy Birthday Dude! 🎂
-                  </motion.h2>
-                  
-                  <div className="flex justify-center mb-3">
-                    <motion.div
-                      className="text-xl handwritten text-red-500 font-bold relative z-10"
-                      animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2.5, repeat: Infinity }}
-                    >
-                      Janamdin ki Shubhkamnayein! 🎊
-                    </motion.div>
-                  </div>
-                  
-                  <p className="handwritten text-gray-700 mb-3 relative z-10">
-                    Enjoy your special day!
-                  </p>
-                  
-                  <div className="flex justify-between mb-3">
-                    <motion.div
-                      className="text-lg handwritten text-purple-600 font-bold relative z-10 -rotate-2"
-                      animate={{ rotate: [-2, 0, -2], opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      Budhe ho gaye tum!
-                    </motion.div>
-                    
-                    <motion.div
-                      className="text-lg handwritten text-green-600 font-bold relative z-10 rotate-2"
-                      animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2.8, repeat: Infinity }}
-                    >
-                      Janam Din Manaao!
-                    </motion.div>
-                  </div>
-                  
-                  <motion.div 
-                    className="text-center font-bold handwritten text-xl text-pink-600 mt-4"
-                    animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    PARTY MUBARAK! 🎉
-                  </motion.div>
-                </div>
-                
-                {/* Forms and time capsule side by side */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
-                  <div className="md:w-1/2">
-                    <WishForm onWishAdded={handleWishAdded} />
-                  </div>
-                  <div className="md:w-1/2">
-                    <TimeCapsule themeClass={themeClass} />
-                  </div>
-                </div>
-                
-                {/* Sticky notes from friends */}
-                <div className="relative bg-white border-2 border-blue-200 rounded-lg p-4 shadow-lg mb-6 min-h-[600px]">
-                  <div className="absolute inset-0 grid grid-cols-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={`board-col-${i}`} className="border-r border-blue-200"></div>
-                    ))}
-                  </div>
-                  <div className="absolute inset-0 grid grid-rows-[repeat(20,1fr)] h-full w-full opacity-20 pointer-events-none">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <div key={`board-row-${i}`} className="border-b border-blue-200"></div>
-                    ))}
-                  </div>
-                  
-                  <h2 className="text-xl font-bold handwritten text-blue-800 mb-2 relative z-10">
-                    Birthday Notes From Your "Friends"
-                  </h2>
-                  <div className="flex justify-center mb-4">
-                    <motion.div
-                      className="text-lg handwritten text-purple-500 font-bold relative z-10"
-                      animate={{ scale: [1, 1.1, 1], rotate: [0, 1, 0, -1, 0] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      Dosto ke Janamdin ke Sandesh
-                    </motion.div>
-                  </div>
 
-                  <div className="relative min-h-[550px]" id="sticky-notes-board">
-                    {/* Custom WishesDisplay component will render stickies inside this board */}
-                    <WishesDisplay refreshTrigger={wishRefreshTrigger} />
-                  </div>
+  useKonamiCode(handleKonamiCode);
+
+  return (
+    <div className={`min-h-screen bg-amber-50 ${konamiActive ? 'rainbow-bg' : ''}`}>
+      <Confetti isActive={showConfetti} onComplete={() => setShowConfetti(false)} />
+
+      {/* Age Badge */}
+      <div className="fixed top-4 left-4 z-40 bg-white p-2 rounded-full shadow-lg border-2 border-pink-200">
+        <div className="handwritten text-sm text-red-500 animate-pulse">
+          Age: {userAge} {userAge > 50 ? '👴' : userAge > 30 ? '👨‍🦳' : '🧑'}
+        </div>
+      </div>
+
+      {/* Header with name */}
+      <header className="text-center pt-16 pb-8 px-4">
+        <motion.h1
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-4xl md:text-5xl font-bold handwritten text-pink-600 mb-2"
+        >
+          🎉 Happy Birthday{userName ? `, ${userName}` : ""}! 🎉
+        </motion.h1>
+        <p className="text-xl handwritten text-purple-600">Ek saal aur bada ho gaya! 🎂</p>
+      </header>
+
+      {/* Floating Balloons */}
+      <div className="fixed pointer-events-none z-0">
+        {['🎈', '🎈', '🎈', '🎈', '🎈'].map((balloon, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-4xl"
+            style={{ left: `${10 + i * 20}%`, top: '100vh' }}
+            animate={{
+              y: [0, -window.innerHeight - 100],
+              x: [0, Math.sin(i) * 50, 0],
+              rotate: [0, 10, -10, 0]
+            }}
+            transition={{
+              duration: 8 + i * 2,
+              repeat: Infinity,
+              delay: i * 3,
+              ease: "linear"
+            }}
+          >
+            {balloon}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Scattered birthday text - MORE! */}
+      <div className="absolute top-32 left-8 rotate-[-15deg] z-10 hidden md:block">
+        <motion.div
+          className="text-xl handwritten text-purple-600 font-bold"
+          animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          Budha ho gaya! 😜
+        </motion.div>
+      </div>
+
+      <div className="absolute top-20 right-16 rotate-[8deg] z-10 hidden md:block">
+        <motion.div
+          className="text-xl handwritten text-orange-500 font-bold"
+          animate={{ y: [0, -5, 0], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 2.8, repeat: Infinity }}
+        >
+          Party time! 🎊
+        </motion.div>
+      </div>
+
+      <div className="absolute top-48 right-8 rotate-[-5deg] z-10 hidden lg:block">
+        <motion.div
+          className="text-lg handwritten text-green-600 font-bold"
+          animate={{ rotate: [-5, 5, -5], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 3, repeat: Infinity }}
+        >
+          Janamdin mubarak! 🥳
+        </motion.div>
+      </div>
+
+      <div className="absolute bottom-32 left-10 rotate-[10deg] z-10 hidden md:block">
+        <motion.div
+          className="text-xl handwritten text-red-500 font-bold"
+          animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
+        >
+          Cake khao! 🍰
+        </motion.div>
+      </div>
+
+      <div className="absolute bottom-48 right-20 rotate-[-8deg] z-10 hidden lg:block">
+        <motion.div
+          className="text-lg handwritten text-indigo-600 font-bold"
+          animate={{ x: [-5, 5, -5], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 4, repeat: Infinity }}
+        >
+          Tum jiyo hazaro saal! ✨
+        </motion.div>
+      </div>
+
+      <div className="absolute top-64 left-1/4 rotate-[5deg] z-10 hidden xl:block">
+        <motion.div
+          className="text-2xl handwritten text-pink-500 font-bold"
+          animate={{ y: [-3, 3, -3], scale: [1, 1.05, 1] }}
+          transition={{ duration: 3.5, repeat: Infinity }}
+        >
+          🎁 Gift kahan hai? 🎁
+        </motion.div>
+      </div>
+
+      {/* Floating confetti decorations */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {['🎊', '⭐', '✨', '🌟', '💫', '🎉'].map((emoji, i) => (
+          <motion.div
+            key={`confetti-${i}`}
+            className="absolute text-2xl opacity-60"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`
+            }}
+            animate={{
+              y: [0, -20, 0],
+              rotate: [0, 360],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{
+              duration: 4 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 2
+            }}
+          >
+            {emoji}
+          </motion.div>
+        ))}
+      </div>
+
+      <main className="container mx-auto px-4 pb-12">
+        {/* Photo Gallery - Paper style */}
+        <section className="mb-10">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-gray-200 relative notebook-paper">
+            {/* Paper lines */}
+            <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden rounded-2xl">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div key={i} className="border-b border-blue-300 h-8" />
+              ))}
+            </div>
+
+            <h2 className="text-2xl handwritten text-blue-800 mb-4 relative z-10">
+              📸 Memories from Friends
+            </h2>
+
+            {photos.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="handwritten text-lg">No photos yet... your friends are lazy! 😴</p>
+              </div>
+            ) : (
+              <div className="relative">
+                {/* Main Photo */}
+                <div className="relative aspect-[4/3] max-w-2xl mx-auto mb-4 overflow-hidden rounded-lg shadow-lg bg-gray-100">
+                  <motion.img
+                    key={currentPhotoIndex}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    src={photos[currentPhotoIndex]?.src}
+                    alt="Memory"
+                    className="w-full h-full object-cover"
+                    style={{
+                      transform: `rotate(${photos[currentPhotoIndex]?.rotation || 0}deg)`
+                    }}
+                  />
+
+                  {/* Voice Note Button */}
+                  {photos[currentPhotoIndex]?.voiceNote && (
+                    <button
+                      onClick={() => playVoiceNote(
+                        photos[currentPhotoIndex].id,
+                        photos[currentPhotoIndex].voiceNote!
+                      )}
+                      className="absolute bottom-4 right-4 bg-pink-500 hover:bg-pink-600 text-white p-3 rounded-full shadow-lg transition-transform hover:scale-110"
+                    >
+                      {playingVoice === photos[currentPhotoIndex].id ? (
+                        <Pause className="h-6 w-6" />
+                      ) : (
+                        <Play className="h-6 w-6" />
+                      )}
+                    </button>
+                  )}
+
+                  {/* Contributor name */}
+                  {photos[currentPhotoIndex]?.contributorName && (
+                    <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1 rounded-full shadow">
+                      <span className="handwritten text-sm text-gray-700">
+                        From: {photos[currentPhotoIndex].contributorName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Navigation arrows */}
+                  {photos.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevPhoto}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow"
+                      >
+                        ◀
+                      </button>
+                      <button
+                        onClick={nextPhoto}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow"
+                      >
+                        ▶
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Photo counter */}
+                <div className="text-center">
+                  <span className="handwritten text-gray-600">
+                    {currentPhotoIndex + 1} / {photos.length}
+                  </span>
                 </div>
               </div>
-            </div>
-          </main>
-          
-          <Footer themeClass={themeClass} />
-          
-          <Confetti 
-            isActive={showConfetti} 
-            onComplete={() => setShowConfetti(false)} 
-          />
-          
-          <Dialog open={konamiDialogOpen} onOpenChange={setKonamiDialogOpen}>
-            <DialogContent className="bg-black bg-opacity-80 text-white">
-              <DialogHeader>
-                <DialogTitle className="text-4xl rainbow-text font-bold text-center">KONAMI CODE ACTIVATED!</DialogTitle>
-                <DialogDescription className="text-2xl mt-4 text-center text-white">
-                  YOU ARE GAMING ROYALTY!
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="flex justify-center">
-                <Button 
-                  onClick={() => {
-                    setKonamiDialogOpen(false);
-                    setTimeout(() => setKonamiActive(false), 500);
-                  }}
-                  className="mt-6 bg-lime-400 text-black px-4 py-2 rounded"
-                >
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Display user age in a fun way */}
-          <div className="fixed top-4 left-4 z-40 bg-white p-2 rounded-full shadow-lg">
-            <div className="handwritten-messy text-sm text-red-500 animate-pulse">
-              Age: {userAge} {userAge > 50 ? '👴' : userAge > 30 ? '👨‍🦳' : '🧑'}
+            )}
+          </div>
+        </section>
+
+        {/* Wishes Board - Scattered sticky notes */}
+        <section className="mb-10">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-blue-200 relative min-h-[500px]">
+            {/* Cork board texture */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none rounded-2xl"
+              style={{ background: 'repeating-linear-gradient(45deg, #d4a373 0, #d4a373 2px, transparent 2px, transparent 10px)' }}
+            />
+
+            <h2 className="text-2xl handwritten text-blue-800 mb-4 relative z-10">
+              💌 Birthday Notes from "Friends"
+            </h2>
+
+            <div className="relative min-h-[400px]">
+              <WishesDisplay refreshTrigger={0} />
             </div>
           </div>
-        </>
-      )}
+        </section>
+
+        {/* Time Capsule - Only show if has messages */}
+        {hasCapsuleMessages && (
+          <section className="mb-10">
+            <div className="bg-white rounded-2xl shadow-xl p-6 border-2 border-amber-200">
+              <h2 className="text-2xl handwritten text-amber-800 mb-4">
+                ⏰ Time Capsule Messages
+              </h2>
+              <TimeCapsuleViewer />
+            </div>
+          </section>
+        )}
+      </main>
+
+      <Footer themeClass="" />
+
+      {/* Konami Dialog */}
+      <Dialog open={konamiDialogOpen} onOpenChange={setKonamiDialogOpen}>
+        <DialogContent className="bg-black/90 text-white border-purple-500">
+          <DialogHeader>
+            <DialogTitle className="text-4xl rainbow-text font-bold text-center">
+              KONAMI CODE!
+            </DialogTitle>
+            <DialogDescription className="text-2xl text-center text-white">
+              YOU ARE GAMING ROYALTY! 🎮
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-center">
+            <Button
+              onClick={() => {
+                setKonamiDialogOpen(false);
+                setTimeout(() => setKonamiActive(false), 500);
+              }}
+              className="bg-purple-500 hover:bg-purple-600"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

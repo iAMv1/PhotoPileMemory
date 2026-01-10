@@ -8,7 +8,7 @@ import { fromZodError } from "zod-validation-error";
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes
   const apiRouter = express.Router();
-  
+
   // Get all wishes
   apiRouter.get("/wishes", async (req: Request, res: Response) => {
     try {
@@ -19,7 +19,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get wishes" });
     }
   });
-  
+
   // Create a new wish
   apiRouter.post("/wishes", async (req: Request, res: Response) => {
     try {
@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
+
   // Get time capsule messages
   apiRouter.get("/time-capsule-messages", async (req: Request, res: Response) => {
     try {
@@ -47,13 +47,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get time capsule messages" });
     }
   });
-  
+
   // Get time capsule message by hour
   apiRouter.get("/time-capsule-messages/current", async (req: Request, res: Response) => {
     try {
       const currentHour = new Date().getHours();
       const message = await storage.getTimeCapsuleMessageByHour(currentHour);
-      
+
       if (message) {
         res.json({ message });
       } else {
@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const messages = await storage.getTimeCapsuleMessages();
         let closestMessage = messages[0];
         let smallestDiff = Math.abs(currentHour - messages[0].hour);
-        
+
         messages.forEach(msg => {
           const diff = Math.abs(currentHour - msg.hour);
           if (diff < smallestDiff) {
@@ -69,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             closestMessage = msg;
           }
         });
-        
+
         res.json({ message: closestMessage });
       }
     } catch (error) {
@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get current time capsule message" });
     }
   });
-  
+
   // Create a new time capsule message
   apiRouter.post("/time-capsule-messages", async (req: Request, res: Response) => {
     try {
@@ -94,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
+
   // Get all user photos
   apiRouter.get("/user-photos", async (req: Request, res: Response) => {
     try {
@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get user photos" });
     }
   });
-  
+
   // Create a new user photo
   apiRouter.post("/user-photos", async (req: Request, res: Response) => {
     try {
@@ -122,7 +122,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-  
+
+  // Get event config
+  apiRouter.get("/event-config", async (req: Request, res: Response) => {
+    try {
+      const config = await storage.getEventConfig();
+      res.json({ config });
+    } catch (error) {
+      console.error("Error getting event config:", error);
+      res.status(500).json({ message: "Failed to get event config" });
+    }
+  });
+
+  // Update event config
+  apiRouter.post("/event-config", async (req: Request, res: Response) => {
+    try {
+      const { key, value } = req.body;
+      if (!key || value === undefined) {
+        return res.status(400).json({ message: "Key and value required" });
+      }
+      await storage.setEventConfig(key, value);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting event config:", error);
+      res.status(500).json({ message: "Failed to set event config" });
+    }
+  });
+
+  // Verify age
+  apiRouter.post("/verify-age", async (req: Request, res: Response) => {
+    try {
+      const { age } = req.body;
+      const config = await storage.getEventConfig();
+      const correctAge = config.find(c => c.key === "birthday_person_age")?.value;
+
+      if (String(age) === String(correctAge)) {
+        res.json({ success: true, verified: true });
+      } else {
+        res.json({ success: true, verified: false });
+      }
+    } catch (error) {
+      console.error("Error verifying age:", error);
+      res.status(500).json({ message: "Failed to verify age" });
+    }
+  });
+
   // Register all API routes with /api prefix
   app.use("/api", apiRouter);
 

@@ -1,19 +1,18 @@
-import { 
-  users, 
-  wishes, 
+import {
+  users,
+  wishes,
   timeCapsuleMessages,
   userPhotos,
-  type User, 
-  type InsertUser, 
-  type Wish, 
-  type InsertWish, 
-  type TimeCapsuleMessage, 
+  type User,
+  type InsertUser,
+  type Wish,
+  type InsertWish,
+  type TimeCapsuleMessage,
   type InsertTimeCapsuleMessage,
   type UserPhoto,
   type InsertUserPhoto
 } from "@shared/schema";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { supabase } from "./db";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -21,66 +20,126 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   getWishes(): Promise<Wish[]>;
   createWish(wish: InsertWish): Promise<Wish>;
-  
+
   getTimeCapsuleMessages(): Promise<TimeCapsuleMessage[]>;
   getTimeCapsuleMessageByHour(hour: number): Promise<TimeCapsuleMessage | undefined>;
   createTimeCapsuleMessage(message: InsertTimeCapsuleMessage): Promise<TimeCapsuleMessage>;
-  
+
   getUserPhotos(): Promise<UserPhoto[]>;
   createUserPhoto(photo: InsertUserPhoto): Promise<UserPhoto>;
+
+  getEventConfig(): Promise<{ key: string; value: string }[]>;
+  setEventConfig(key: string, value: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id));
-    return result.length ? result[0] : undefined;
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return undefined;
+    return data as User;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username));
-    return result.length ? result[0] : undefined;
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+
+    if (error) return undefined;
+    return data as User;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
-    return result[0];
+    const { data, error } = await supabase
+      .from('users')
+      .insert(insertUser)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data as User;
   }
-  
+
   async getWishes(): Promise<Wish[]> {
-    return await db.select().from(wishes);
+    const { data, error } = await supabase
+      .from('wishes')
+      .select('*');
+
+    if (error) throw new Error(error.message);
+    return data as Wish[];
   }
-  
+
   async createWish(insertWish: InsertWish): Promise<Wish> {
-    const result = await db.insert(wishes).values(insertWish).returning();
-    return result[0];
+    const { data, error } = await supabase
+      .from('wishes')
+      .insert(insertWish)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data as Wish[];
   }
-  
+
   async getTimeCapsuleMessages(): Promise<TimeCapsuleMessage[]> {
-    return await db.select().from(timeCapsuleMessages);
+    const { data, error } = await supabase
+      .from('time_capsule_messages')
+      .select('*');
+
+    if (error) throw new Error(error.message);
+    return data as TimeCapsuleMessage[];
   }
-  
+
   async getTimeCapsuleMessageByHour(hour: number): Promise<TimeCapsuleMessage | undefined> {
-    const result = await db.select().from(timeCapsuleMessages).where(eq(timeCapsuleMessages.hour, hour));
-    return result.length ? result[0] : undefined;
+    const { data, error } = await supabase
+      .from('time_capsule_messages')
+      .select('*')
+      .eq('hour', hour)
+      .single();
+
+    if (error) return undefined;
+    return data as TimeCapsuleMessage;
   }
-  
+
   async createTimeCapsuleMessage(insertMessage: InsertTimeCapsuleMessage): Promise<TimeCapsuleMessage> {
-    const result = await db.insert(timeCapsuleMessages).values(insertMessage).returning();
-    return result[0];
+    const { data, error } = await supabase
+      .from('time_capsule_messages')
+      .insert(insertMessage)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data as TimeCapsuleMessage;
   }
-  
+
   async getUserPhotos(): Promise<UserPhoto[]> {
-    return await db.select().from(userPhotos);
+    const { data, error } = await supabase
+      .from('user_photos')
+      .select('*');
+
+    if (error) throw new Error(error.message);
+    return data as UserPhoto[];
   }
-  
+
   async createUserPhoto(insertPhoto: InsertUserPhoto): Promise<UserPhoto> {
-    const result = await db.insert(userPhotos).values(insertPhoto).returning();
-    return result[0];
+    const { data, error } = await supabase
+      .from('user_photos')
+      .insert(insertPhoto)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data as UserPhoto;
   }
-  
+
   async initializeDefaultTimeCapsuleMessages() {
     const existingMessages = await this.getTimeCapsuleMessages();
     if (existingMessages.length === 0) {
@@ -92,11 +151,28 @@ export class DatabaseStorage implements IStorage {
         { hour: 20, message: "You are aging! Look at those wrinkles forming as we speak! 👵" },
         { hour: 21, message: "Nearly bedtime, grandpa! Remember when you could stay up late? 🌙" }
       ];
-      
+
       for (const message of defaultMessages) {
         await this.createTimeCapsuleMessage(message);
       }
     }
+  }
+
+  async getEventConfig(): Promise<{ key: string; value: string }[]> {
+    const { data, error } = await supabase
+      .from('event_config')
+      .select('key, value');
+
+    if (error) return [];
+    return data as { key: string; value: string }[];
+  }
+
+  async setEventConfig(key: string, value: string): Promise<void> {
+    const { error } = await supabase
+      .from('event_config')
+      .upsert({ key, value }, { onConflict: 'key' });
+
+    if (error) throw new Error(error.message);
   }
 }
 

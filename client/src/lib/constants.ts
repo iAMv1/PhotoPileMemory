@@ -1,5 +1,11 @@
 // Photo sources for the image stack
-export const PHOTOS: string[] = [];
+export const PHOTOS: string[] = [
+  "https://images.unsplash.com/photo-1513151233558-d860c5398176?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1530103862676-de3c9da59af7?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1464349153912-6a42270a2d31?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?q=80&w=1000&auto=format&fit=crop"
+];
 
 // Default time capsule messages
 export const DEFAULT_TIME_CAPSULE_MESSAGES = [

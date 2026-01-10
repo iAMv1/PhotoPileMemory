@@ -49,6 +49,14 @@ export const userPhotos = pgTable("user_photos", {
   rotation: integer("rotation").notNull(),
   zIndex: integer("z_index").notNull(),
   comment: text("comment"),
+  memoryClue: text("memory_clue"),
+  voiceNote: text("voice_note"),
+  isGlitched: boolean("is_glitched").default(true),
+  contributorName: text("contributor_name"),
+  riddleQuestion: text("riddle_question"),
+  riddleOptions: text("riddle_options"),
+  riddleAnswer: text("riddle_answer"),
+  riddleType: text("riddle_type").default("text"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
