@@ -1,147 +1,121 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
-import { Loader2, Upload, Send, HelpCircle, MessageSquare, Settings, Check } from "lucide-react";
+import { Loader2, Upload, Send, HelpCircle, MessageSquare, Image, Lock, Camera } from "lucide-react";
 
 type RiddleType = "text" | "mcq";
 
 export default function ContributorDashboard() {
     const { toast } = useToast();
+    const [match, params] = useRoute("/e/:slug/contribute");
+    const slug = params?.slug;
+
+    // Fetch Event Details
+    const { data: event, isLoading: isEventLoading } = useQuery({
+        queryKey: ['/api/events', slug],
+        queryFn: async () => {
+            if (!slug) throw new Error("No event specified");
+            const res = await fetch(`/api/events/${slug}`);
+            if (!res.ok) throw new Error("Event not found");
+            return (await res.json()).event;
+        },
+        enabled: !!slug
+    });
+
+    // === SHARED STATE ===
     const [name, setName] = useState("");
-    const [clue, setClue] = useState("");
-    const [photo, setPhoto] = useState<string | null>(null);
-    const [voiceNote, setVoiceNote] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Event Config state
-    const [birthdayAge, setBirthdayAge] = useState("");
-    const [birthdayName, setBirthdayName] = useState("");
-    const [isSavingConfig, setIsSavingConfig] = useState(false);
-
-    // Riddle state
-    const [hasRiddle, setHasRiddle] = useState(false);
+    // === MEMORY MAZE STATE (Riddle Photos) ===
+    const [mazePhoto, setMazePhoto] = useState<string | null>(null);
+    const [mazeClue, setMazeClue] = useState("");
     const [riddleType, setRiddleType] = useState<RiddleType>("text");
     const [riddleQuestion, setRiddleQuestion] = useState("");
     const [riddleAnswer, setRiddleAnswer] = useState("");
     const [riddleOptions, setRiddleOptions] = useState<string[]>(["", "", "", ""]);
+    const [isMazeSubmitting, setIsMazeSubmitting] = useState(false);
 
-    // Wish state
+    // === PHOTO GALLERY STATE (Home Page Photos) ===
+    const [galleryPhoto, setGalleryPhoto] = useState<string | null>(null);
+    const [galleryCaption, setGalleryCaption] = useState("");
+    const [voiceNote, setVoiceNote] = useState<string | null>(null);
+    const [isGallerySubmitting, setIsGallerySubmitting] = useState(false);
+
+    // === WISH STATE ===
     const [wishMessage, setWishMessage] = useState("");
 
-    // Load existing config
-    useEffect(() => {
-        fetch("/api/event-config")
-            .then(r => r.json())
-            .then(data => {
-                const age = data.config?.find((c: any) => c.key === "birthday_person_age")?.value;
-                const name = data.config?.find((c: any) => c.key === "birthday_person_name")?.value;
-                if (age) setBirthdayAge(age);
-                if (name) setBirthdayName(name);
-            })
-            .catch(() => { });
-    }, []);
+    // === TIME CAPSULE STATE ===
+    const [capsuleMessage, setCapsuleMessage] = useState("");
+    const [capsuleHour, setCapsuleHour] = useState("12");
+    const [isSendingCapsule, setIsSendingCapsule] = useState(false);
 
-    const saveConfig = async () => {
-        if (!birthdayAge.trim()) {
-            toast({ title: "Age Required", description: "Enter the birthday person's age.", variant: "destructive" });
-            return;
-        }
-        setIsSavingConfig(true);
-        try {
-            await fetch("/api/event-config", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ key: "birthday_person_age", value: birthdayAge.trim() }),
-            });
-            if (birthdayName.trim()) {
-                await fetch("/api/event-config", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ key: "birthday_person_name", value: birthdayName.trim() }),
-                });
-            }
-            toast({ title: "Settings Saved!", description: "Birthday person's age is now the key to enter." });
-        } catch {
-            toast({ title: "Error", description: "Could not save settings.", variant: "destructive" });
-        } finally {
-            setIsSavingConfig(false);
-        }
-    };
-
-    const photoMutation = useMutation({
+    // === MUTATIONS ===
+    const mazeMutation = useMutation({
         mutationFn: async (data: any) => {
-            await apiRequest("POST", "/api/user-photos", data);
+            await apiRequest("/api/user-photos", { method: "POST", body: { ...data, eventId: event?.id } });
         },
         onSuccess: () => {
-            toast({ title: "Memory Uploaded!", description: "Thanks for contributing to the maze." });
-            resetPhotoForm();
+            toast({ title: "🔐 Maze Photo Added!", description: "It will be locked until the riddle is solved." });
+            resetMazeForm();
         },
         onError: () => {
-            toast({ title: "Upload Failed", description: "Something went wrong.", variant: "destructive" });
-            setIsSubmitting(false);
+            toast({ title: "Upload Failed", variant: "destructive" });
+            setIsMazeSubmitting(false);
+        },
+    });
+
+    const galleryMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await apiRequest("/api/user-photos", { method: "POST", body: { ...data, eventId: event?.id } });
+        },
+        onSuccess: () => {
+            toast({ title: "📸 Memory Added!", description: "It will appear on the celebration page." });
+            resetGalleryForm();
+        },
+        onError: () => {
+            toast({ title: "Upload Failed", variant: "destructive" });
+            setIsGallerySubmitting(false);
         },
     });
 
     const wishMutation = useMutation({
         mutationFn: async (data: any) => {
-            await apiRequest("POST", "/api/wishes", data);
+            await apiRequest("/api/wishes", { method: "POST", body: { ...data, eventId: event?.id } });
         },
         onSuccess: () => {
             toast({ title: "Wish Sent!", description: "Your message has been added." });
             setWishMessage("");
         },
         onError: () => {
-            toast({ title: "Failed", description: "Could not send wish.", variant: "destructive" });
+            toast({ title: "Failed", variant: "destructive" });
         },
     });
 
-    const resetPhotoForm = () => {
-        setName("");
-        setClue("");
-        setPhoto(null);
-        setVoiceNote(null);
-        setHasRiddle(false);
+    // === HELPER FUNCTIONS ===
+    const resetMazeForm = () => {
+        setMazePhoto(null);
+        setMazeClue("");
         setRiddleQuestion("");
         setRiddleAnswer("");
         setRiddleOptions(["", "", "", ""]);
-        setIsSubmitting(false);
+        setIsMazeSubmitting(false);
     };
 
-    // Time Capsule state
-    const [capsuleMessage, setCapsuleMessage] = useState("");
-    const [capsuleHour, setCapsuleHour] = useState("12");
-    const [isSendingCapsule, setIsSendingCapsule] = useState(false);
-
-    const handleSubmitCapsule = async () => {
-        if (!capsuleMessage.trim()) {
-            toast({ title: "Message Required", variant: "destructive" });
-            return;
-        }
-        setIsSendingCapsule(true);
-        try {
-            await apiRequest("POST", "/api/time-capsule-messages", {
-                hour: parseInt(capsuleHour),
-                message: capsuleMessage,
-                authorName: name || "A Friend",
-            });
-            toast({ title: "Time Capsule Sent!", description: `Message will unlock at ${capsuleHour}:00` });
-            setCapsuleMessage("");
-        } catch {
-            toast({ title: "Failed", description: "Could not send time capsule.", variant: "destructive" });
-        } finally {
-            setIsSendingCapsule(false);
-        }
+    const resetGalleryForm = () => {
+        setGalleryPhoto(null);
+        setGalleryCaption("");
+        setVoiceNote(null);
+        setIsGallerySubmitting(false);
     };
 
-    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoUpload = (setter: (url: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             if (file.size > 10 * 1024 * 1024) {
@@ -149,7 +123,7 @@ export default function ContributorDashboard() {
                 return;
             }
             const reader = new FileReader();
-            reader.onloadend = () => setPhoto(reader.result as string);
+            reader.onloadend = () => setter(reader.result as string);
             reader.readAsDataURL(file);
         }
     };
@@ -160,34 +134,56 @@ export default function ContributorDashboard() {
         reader.readAsDataURL(blob);
     };
 
-    const handleSubmitPhoto = () => {
-        if (!photo) {
-            toast({ title: "Photo Required", variant: "destructive" });
+    const handleSubmitMaze = () => {
+        if (!mazePhoto || !riddleQuestion || !riddleAnswer) {
+            toast({ title: "Riddle Required", description: "Add a question and answer to lock the photo.", variant: "destructive" });
             return;
         }
-
-        setIsSubmitting(true);
-        photoMutation.mutate({
-            src: photo,
+        setIsMazeSubmitting(true);
+        mazeMutation.mutate({
+            src: mazePhoto,
             x: Math.floor(Math.random() * 50),
             y: Math.floor(Math.random() * 50),
             rotation: Math.floor(Math.random() * 20) - 10,
             zIndex: 1,
             comment: "",
-            memoryClue: clue || null,
+            memoryClue: mazeClue || null,
+            voiceNote: null,
+            contributorName: name || "Anonymous Friend",
+            isGlitched: true, // KEY: This goes to Memory Maze
+            riddleQuestion: riddleQuestion,
+            riddleOptions: riddleType === "mcq" ? JSON.stringify(riddleOptions.filter(o => o.trim())) : null,
+            riddleAnswer: riddleAnswer,
+            riddleType: riddleType,
+        });
+    };
+
+    const handleSubmitGallery = () => {
+        if (!galleryPhoto) {
+            toast({ title: "Photo Required", variant: "destructive" });
+            return;
+        }
+        setIsGallerySubmitting(true);
+        galleryMutation.mutate({
+            src: galleryPhoto,
+            x: Math.floor(Math.random() * 50),
+            y: Math.floor(Math.random() * 50),
+            rotation: Math.floor(Math.random() * 20) - 10,
+            zIndex: 1,
+            comment: "",
+            memoryClue: galleryCaption || null,
             voiceNote: voiceNote,
             contributorName: name || "Anonymous Friend",
-            isGlitched: true,
-            riddleQuestion: hasRiddle ? riddleQuestion : null,
-            riddleOptions: hasRiddle && riddleType === "mcq" ? JSON.stringify(riddleOptions.filter(o => o.trim())) : null,
-            riddleAnswer: hasRiddle ? riddleAnswer : null,
-            riddleType: hasRiddle ? riddleType : null,
+            isGlitched: false, // KEY: This goes to Home Gallery
+            riddleQuestion: null,
+            riddleOptions: null,
+            riddleAnswer: null,
+            riddleType: null,
         });
     };
 
     const handleSubmitWish = () => {
         if (!wishMessage.trim()) return;
-
         const styles = ["bg-yellow-200", "bg-pink-200", "bg-blue-200", "bg-green-200", "bg-purple-200"];
         wishMutation.mutate({
             text: wishMessage,
@@ -201,77 +197,53 @@ export default function ContributorDashboard() {
         });
     };
 
+    const handleSubmitCapsule = async () => {
+        if (!capsuleMessage.trim() || !event) {
+            toast({ title: "Message Required", variant: "destructive" });
+            return;
+        }
+        setIsSendingCapsule(true);
+        try {
+            await apiRequest("/api/time-capsule-messages", {
+                method: "POST",
+                body: {
+                    hour: parseInt(capsuleHour),
+                    message: capsuleMessage,
+                    authorName: name || "A Friend",
+                    eventId: event.id
+                }
+            });
+            toast({ title: "Time Capsule Sent!", description: `Message will unlock at ${capsuleHour}:00` });
+            setCapsuleMessage("");
+        } catch {
+            toast({ title: "Failed", variant: "destructive" });
+        } finally {
+            setIsSendingCapsule(false);
+        }
+    };
+
+    // === EARLY RETURNS (after all hooks) ===
+    if (isEventLoading) return <div className="text-white text-center py-20"><Loader2 className="animate-spin h-8 w-8 mx-auto" /> Loading Event...</div>;
+    if (!event) return <div className="text-white text-center py-20">Event not found</div>;
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-red-950/20 to-neutral-950 text-neutral-100 p-4">
             <div className="max-w-md mx-auto space-y-6">
                 {/* Header */}
                 <div className="text-center space-y-2 mt-8">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
-                        🎭 The Guest Pass
+                        For {event.birthdayPersonName}'s Birthday 🎂
                     </h1>
                     <p className="text-neutral-400 text-sm">
                         Add memories, riddles, and wishes to the celebration.
                     </p>
                 </div>
 
-                {/* EVENT SETTINGS - Set Birthday Person's Age */}
-                <Card className="bg-neutral-900/80 border-yellow-900/50 backdrop-blur">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center gap-2 text-yellow-500">
-                            <Settings className="h-5 w-5" />
-                            Event Settings
-                        </CardTitle>
-                        <CardDescription>Set the "key" to enter the maze</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1">
-                                <Label className="text-xs">Birthday Person's Name</Label>
-                                <Input
-                                    placeholder="Name"
-                                    value={birthdayName}
-                                    onChange={(e) => setBirthdayName(e.target.value)}
-                                    className="bg-neutral-800 border-neutral-700"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs">Their Age (The Key)</Label>
-                                <Input
-                                    type="number"
-                                    placeholder="25"
-                                    value={birthdayAge}
-                                    onChange={(e) => setBirthdayAge(e.target.value)}
-                                    className="bg-neutral-800 border-neutral-700"
-                                />
-                            </div>
-                        </div>
-                        <Button
-                            onClick={saveConfig}
-                            disabled={isSavingConfig}
-                            className="w-full bg-yellow-600 hover:bg-yellow-700"
-                            size="sm"
-                        >
-                            {isSavingConfig ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1" /> Save Settings</>}
-                        </Button>
-                        <p className="text-xs text-neutral-500 text-center">
-                            ⚠️ Only they can enter the maze by guessing this age correctly.
-                        </p>
-                    </CardContent>
-                </Card>
-
-                {/* SECTION 1: Photo + Riddle */}
-                <Card className="bg-neutral-900/80 border-red-900/50 backdrop-blur">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Upload className="h-5 w-5 text-red-500" />
-                            Upload Memory
-                        </CardTitle>
-                        <CardDescription>Photo + Optional Riddle</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Name */}
+                {/* Your Name (shared) */}
+                <Card className="bg-neutral-900/80 border-neutral-800 backdrop-blur">
+                    <CardContent className="pt-4">
                         <div className="space-y-2">
-                            <Label>Your Name</Label>
+                            <Label>Your Name (used for all contributions)</Label>
                             <Input
                                 placeholder="Who are you?"
                                 value={name}
@@ -279,19 +251,33 @@ export default function ContributorDashboard() {
                                 className="bg-neutral-800 border-neutral-700"
                             />
                         </div>
+                    </CardContent>
+                </Card>
 
+                {/* ==================== SECTION 1: MEMORY MAZE ==================== */}
+                <Card className="bg-neutral-900/80 border-red-900/50 backdrop-blur">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Lock className="h-5 w-5 text-red-500" />
+                            Add to Memory Maze
+                        </CardTitle>
+                        <CardDescription className="text-red-300/70">
+                            🔒 This photo will be LOCKED. They must solve your riddle to see it!
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                         {/* Photo Upload */}
                         <div className="space-y-2">
-                            <Label>The Photo</Label>
+                            <Label>The Photo (will be blurred until unlocked)</Label>
                             <div className="border-2 border-dashed border-red-900/50 rounded-lg p-4 text-center hover:bg-red-900/10 transition cursor-pointer relative overflow-hidden">
                                 <input
                                     type="file"
                                     accept="image/*"
                                     className="absolute inset-0 opacity-0 cursor-pointer"
-                                    onChange={handlePhotoUpload}
+                                    onChange={handlePhotoUpload(setMazePhoto)}
                                 />
-                                {photo ? (
-                                    <img src={photo} alt="Preview" className="max-h-48 mx-auto rounded shadow-lg" />
+                                {mazePhoto ? (
+                                    <img src={mazePhoto} alt="Preview" className="max-h-48 mx-auto rounded shadow-lg filter blur-sm" />
                                 ) : (
                                     <div className="flex flex-col items-center gap-2 text-neutral-500 py-4">
                                         <Upload className="h-10 w-10" />
@@ -301,119 +287,151 @@ export default function ContributorDashboard() {
                             </div>
                         </div>
 
-                        {/* Memory Clue */}
+                        {/* Riddle Question (REQUIRED) */}
                         <div className="space-y-2">
-                            <Label>Memory Clue (Optional)</Label>
+                            <Label className="text-red-400">Riddle Question *</Label>
                             <Textarea
-                                placeholder="A hint about this photo..."
-                                value={clue}
-                                onChange={(e) => setClue(e.target.value)}
-                                className="bg-neutral-800 border-neutral-700 resize-none"
+                                placeholder="Ask something only they would know about this memory..."
+                                value={riddleQuestion}
+                                onChange={(e) => setRiddleQuestion(e.target.value)}
+                                className="bg-neutral-800 border-red-900/50"
+                            />
+                        </div>
+
+                        {/* Riddle Type Toggle */}
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant={riddleType === "text" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setRiddleType("text")}
+                                className="flex-1"
+                            >
+                                Text Answer
+                            </Button>
+                            <Button
+                                type="button"
+                                variant={riddleType === "mcq" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setRiddleType("mcq")}
+                                className="flex-1"
+                            >
+                                Multiple Choice
+                            </Button>
+                        </div>
+
+                        {/* Answer Input */}
+                        {riddleType === "mcq" ? (
+                            <div className="space-y-2">
+                                <Label>Options (select the correct one)</Label>
+                                {riddleOptions.map((opt, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center">
+                                        <input
+                                            type="radio"
+                                            name="correctMazeAnswer"
+                                            checked={riddleAnswer === opt && opt !== ""}
+                                            onChange={() => setRiddleAnswer(opt)}
+                                            className="accent-green-500"
+                                        />
+                                        <Input
+                                            placeholder={`Option ${idx + 1}`}
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const newOpts = [...riddleOptions];
+                                                newOpts[idx] = e.target.value;
+                                                setRiddleOptions(newOpts);
+                                            }}
+                                            className="bg-neutral-800 border-neutral-700 flex-1"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Label className="text-red-400">Correct Answer *</Label>
+                                <Input
+                                    placeholder="The answer to unlock this photo..."
+                                    value={riddleAnswer}
+                                    onChange={(e) => setRiddleAnswer(e.target.value)}
+                                    className="bg-neutral-800 border-red-900/50"
+                                />
+                            </div>
+                        )}
+
+                        <Button
+                            className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                            onClick={handleSubmitMaze}
+                            disabled={isMazeSubmitting}
+                        >
+                            {isMazeSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...</> : <><Lock className="mr-2 h-4 w-4" /> Lock in Maze</>}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {/* ==================== SECTION 2: PHOTO GALLERY ==================== */}
+                <Card className="bg-neutral-900/80 border-blue-900/50 backdrop-blur">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Camera className="h-5 w-5 text-blue-500" />
+                            Add to Photo Gallery
+                        </CardTitle>
+                        <CardDescription className="text-blue-300/70">
+                            📸 This photo will appear on the celebration page. Add a voice message!
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {/* Photo Upload */}
+                        <div className="space-y-2">
+                            <Label>The Photo</Label>
+                            <div className="border-2 border-dashed border-blue-900/50 rounded-lg p-4 text-center hover:bg-blue-900/10 transition cursor-pointer relative overflow-hidden">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    onChange={handlePhotoUpload(setGalleryPhoto)}
+                                />
+                                {galleryPhoto ? (
+                                    <img src={galleryPhoto} alt="Preview" className="max-h-48 mx-auto rounded shadow-lg" />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2 text-neutral-500 py-4">
+                                        <Image className="h-10 w-10" />
+                                        <span className="text-sm">Tap to select photo</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Caption */}
+                        <div className="space-y-2">
+                            <Label>Caption (optional)</Label>
+                            <Textarea
+                                placeholder="Add a sweet message about this memory..."
+                                value={galleryCaption}
+                                onChange={(e) => setGalleryCaption(e.target.value)}
+                                className="bg-neutral-800 border-neutral-700"
                             />
                         </div>
 
                         {/* Voice Note */}
                         <div className="space-y-2">
-                            <Label>Voice Note (Optional)</Label>
+                            <Label>Voice Message (optional)</Label>
                             <VoiceRecorder
                                 onRecordingComplete={handleVoiceRecording}
                                 onClear={() => setVoiceNote(null)}
                             />
                         </div>
 
-                        {/* Riddle Toggle */}
-                        <div className="flex items-center justify-between p-3 bg-neutral-800/50 rounded-lg border border-neutral-700">
-                            <div className="flex items-center gap-2">
-                                <HelpCircle className="h-5 w-5 text-orange-500" />
-                                <span className="text-sm font-medium">Add a Riddle?</span>
-                            </div>
-                            <Switch checked={hasRiddle} onCheckedChange={setHasRiddle} />
-                        </div>
-
-                        {/* Riddle Form */}
-                        {hasRiddle && (
-                            <div className="space-y-4 p-4 bg-orange-900/20 rounded-lg border border-orange-900/50">
-                                <div className="flex gap-2">
-                                    <Button
-                                        type="button"
-                                        variant={riddleType === "text" ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => setRiddleType("text")}
-                                        className="flex-1"
-                                    >
-                                        Text Answer
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant={riddleType === "mcq" ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => setRiddleType("mcq")}
-                                        className="flex-1"
-                                    >
-                                        Multiple Choice
-                                    </Button>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Riddle Question</Label>
-                                    <Textarea
-                                        placeholder="Ask a tricky question about this memory..."
-                                        value={riddleQuestion}
-                                        onChange={(e) => setRiddleQuestion(e.target.value)}
-                                        className="bg-neutral-800 border-neutral-700"
-                                    />
-                                </div>
-
-                                {riddleType === "mcq" ? (
-                                    <div className="space-y-2">
-                                        <Label>Options (Mark correct answer)</Label>
-                                        {riddleOptions.map((opt, idx) => (
-                                            <div key={idx} className="flex gap-2 items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="correctAnswer"
-                                                    checked={riddleAnswer === opt && opt !== ""}
-                                                    onChange={() => setRiddleAnswer(opt)}
-                                                    className="accent-green-500"
-                                                />
-                                                <Input
-                                                    placeholder={`Option ${idx + 1}`}
-                                                    value={opt}
-                                                    onChange={(e) => {
-                                                        const newOpts = [...riddleOptions];
-                                                        newOpts[idx] = e.target.value;
-                                                        setRiddleOptions(newOpts);
-                                                    }}
-                                                    className="bg-neutral-800 border-neutral-700 flex-1"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <Label>Correct Answer</Label>
-                                        <Input
-                                            placeholder="The answer to your riddle..."
-                                            value={riddleAnswer}
-                                            onChange={(e) => setRiddleAnswer(e.target.value)}
-                                            className="bg-neutral-800 border-neutral-700"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
                         <Button
-                            className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-6"
-                            onClick={handleSubmitPhoto}
-                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                            onClick={handleSubmitGallery}
+                            disabled={isGallerySubmitting}
                         >
-                            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</> : <><Send className="mr-2 h-4 w-4" /> Add to Maze</>}
+                            {isGallerySubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...</> : <><Camera className="mr-2 h-4 w-4" /> Add to Gallery</>}
                         </Button>
                     </CardContent>
                 </Card>
 
-                {/* SECTION 2: Write a Wish */}
+                {/* ==================== SECTION 3: WISHES ==================== */}
                 <Card className="bg-neutral-900/80 border-purple-900/50 backdrop-blur">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -439,7 +457,7 @@ export default function ContributorDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* SECTION 3: Time Capsule */}
+                {/* ==================== SECTION 4: TIME CAPSULE ==================== */}
                 <Card className="bg-neutral-900/80 border-amber-900/50 backdrop-blur">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -450,7 +468,7 @@ export default function ContributorDashboard() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Unlock Hour (24-hour format)</Label>
+                            <Label>Unlock Hour</Label>
                             <select
                                 value={capsuleHour}
                                 onChange={(e) => setCapsuleHour(e.target.value)}

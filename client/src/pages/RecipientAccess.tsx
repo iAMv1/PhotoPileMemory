@@ -1,17 +1,35 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import { MemoryMaze } from "@/components/MemoryMaze";
 import { RansomwareReveal } from "@/components/RansomwareReveal";
 import { EnvelopeReveal } from "@/components/EnvelopeReveal";
 import { SystemNotification, useSystemOverride } from "@/components/SystemOverride";
+import Home from "@/pages/Home";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
-type Stage = "intro" | "maze" | "ransomware" | "gift" | "envelope";
+type Stage = "intro" | "maze" | "ransomware" | "gift" | "envelope" | "celebration";
 
 export default function RecipientAccess() {
+    const [match, params] = useRoute("/e/:slug/access");
+    const slug = params?.slug;
     const [, setLocation] = useLocation();
+
+    // Fetch Event
+    const { data: event, isLoading: isEventLoading } = useQuery({
+        queryKey: ['/api/events', slug],
+        queryFn: async () => {
+            if (!slug) throw new Error("No event specified");
+            const res = await fetch(`/api/events/${slug}`);
+            if (!res.ok) throw new Error("Event not found");
+            return (await res.json()).event;
+        },
+        enabled: !!slug
+    });
+
     const [stage, setStage] = useState<Stage>("intro");
     const [age, setAge] = useState("");
     const [ageError, setAgeError] = useState("");
@@ -29,7 +47,7 @@ export default function RecipientAccess() {
     }, [stage, triggerRandom]);
 
     const handleEnter = async () => {
-        if (!age.trim()) return;
+        if (!age.trim() || !event) return;
 
         setIsVerifying(true);
         setAgeError("");
@@ -38,7 +56,7 @@ export default function RecipientAccess() {
             const res = await fetch("/api/verify-age", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ age: age.trim() }),
+                body: JSON.stringify({ age: age.trim(), eventId: event.id }),
             });
             const data = await res.json();
 
@@ -46,15 +64,10 @@ export default function RecipientAccess() {
                 if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
                 triggerRandom();
                 // Store verified age for Home page to skip its verification
-                localStorage.setItem("maze_completed", "true");
-                localStorage.setItem("verified_age", age.trim());
-                // Also fetch and store the birthday person's name
-                try {
-                    const configRes = await fetch("/api/event-config");
-                    const configData = await configRes.json();
-                    const bName = configData.config?.find((c: any) => c.key === "birthday_person_name")?.value;
-                    if (bName) localStorage.setItem("birthday_person_name", bName);
-                } catch { /* ignore */ }
+                localStorage.setItem(`maze_completed_${event.id}`, "true");
+                localStorage.setItem(`verified_age_${event.id}`, age.trim());
+                localStorage.setItem(`birthday_person_name_${event.id}`, event.birthdayPersonName);
+
                 setStage("maze");
             } else {
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -75,17 +88,22 @@ export default function RecipientAccess() {
     };
 
     const handleRansomwareUnlock = () => {
-        setStage("gift");
-        // After showing the gift message briefly, show envelope
-        setTimeout(() => {
-            setStage("envelope");
-        }, 2500);
+        // RansomwareReveal already shows the "HAPPY BIRTHDAY" giftContent internally
+        // Go directly to envelope stage for the next experience
+        setStage("envelope");
     };
 
     const handleEnvelopeComplete = () => {
-        // Redirect to celebration page
-        setLocation("/");
+        // Switch to celebration view
+        setStage("celebration");
     };
+
+    if (isEventLoading) return <div className="min-h-screen bg-black flex items-center justify-center text-white"><Loader2 className="animate-spin mr-2" /> Loading...</div>;
+    if (!event) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Event not found</div>;
+
+    if (stage === "celebration") {
+        return <Home eventId={event.id} />;
+    }
 
     return (
         <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -192,7 +210,7 @@ export default function RecipientAccess() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
                     >
-                        <MemoryMaze onAllUnlocked={handleMazeComplete} />
+                        <MemoryMaze onAllUnlocked={handleMazeComplete} eventId={event?.id} />
 
                         <div className="fixed bottom-4 left-4 right-4 flex justify-center pb-safe">
                             <Button
@@ -213,34 +231,7 @@ export default function RecipientAccess() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, scale: 1.1 }}
                     >
-                        <RansomwareReveal
-                            onUnlock={handleRansomwareUnlock}
-                            giftContent={
-                                <motion.div
-                                    initial={{ scale: 0, rotate: -10 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ type: "spring", stiffness: 200 }}
-                                    className="text-center p-8"
-                                >
-                                    <div className="text-6xl mb-6">🎉🎂🎁</div>
-                                    <h2 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 mb-6">
-                                        HAPPY BIRTHDAY!
-                                    </h2>
-                                    <p className="text-white text-xl mb-8">
-                                        You've survived the maze.<br />
-                                        <span className="text-neutral-400">Your friends still love you. (Despite your age.)</span>
-                                    </p>
-                                    <div className="bg-gradient-to-r from-yellow-600/20 to-purple-600/20 p-6 rounded-2xl border border-yellow-500/30 max-w-md mx-auto">
-                                        <p className="text-yellow-300 text-lg font-medium mb-2">
-                                            🎊 Opening the celebration...
-                                        </p>
-                                        <p className="text-neutral-400 text-sm">
-                                            Taking you to the full party experience!
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            }
-                        />
+                        <RansomwareReveal onUnlock={handleRansomwareUnlock} />
                     </motion.div>
                 )}
 
@@ -248,7 +239,7 @@ export default function RecipientAccess() {
                 {stage === "envelope" && (
                     <EnvelopeReveal
                         onComplete={handleEnvelopeComplete}
-                        birthdayName={localStorage.getItem("birthday_person_name") || undefined}
+                        birthdayName={event.birthdayPersonName}
                     />
                 )}
             </AnimatePresence>

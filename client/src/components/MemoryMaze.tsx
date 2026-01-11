@@ -35,10 +35,16 @@ function UnlockModal({ photo, onClose, onUnlock }: UnlockModalProps) {
         } catch { options = []; }
     }
 
+    const [unlockSuccess, setUnlockSuccess] = useState(false);
+
     const handleSubmit = () => {
         if (!hasRiddle || answer.toLowerCase().trim() === photo.riddleAnswer?.toLowerCase().trim()) {
             if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
-            onUnlock();
+            // Show success state for 1.5 seconds before closing
+            setUnlockSuccess(true);
+            setTimeout(() => {
+                onUnlock();
+            }, 1500);
         } else {
             setShake(true);
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -52,85 +58,126 @@ function UnlockModal({ photo, onClose, onUnlock }: UnlockModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
-            onClick={onClose}
+            onClick={unlockSuccess ? undefined : onClose}
         >
             <motion.div
                 initial={{ scale: 0.8, y: 50, rotateX: -10 }}
-                animate={{ scale: 1, y: 0, rotateX: 0, x: shake ? [0, -10, 10, -10, 10, 0] : 0 }}
+                animate={{
+                    scale: unlockSuccess ? 1.05 : 1,
+                    y: 0,
+                    rotateX: 0,
+                    x: shake ? [0, -10, 10, -10, 10, 0] : 0,
+                    borderColor: unlockSuccess ? "rgb(34, 197, 94)" : "rgb(153, 27, 27)"
+                }}
                 exit={{ scale: 0.8, y: 50 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="bg-gradient-to-b from-neutral-900 to-neutral-950 border border-red-800/50 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl shadow-red-900/30"
+                className={`rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl ${unlockSuccess
+                    ? "bg-gradient-to-b from-green-900 to-green-950 border border-green-500/50 shadow-green-900/50"
+                    : "bg-gradient-to-b from-neutral-900 to-neutral-950 border border-red-800/50 shadow-red-900/30"
+                    }`}
                 onClick={(e) => e.stopPropagation()}
                 style={{ perspective: "1000px" }}
             >
-                {/* Glitch Header */}
+                {/* Header - changes based on unlock success */}
                 <div className="relative">
-                    <h3 className="text-2xl font-bold text-red-500 text-center tracking-wider">
-                        🔐 LOCKED
+                    <h3 className={`text-2xl font-bold text-center tracking-wider ${unlockSuccess ? "text-green-400" : "text-red-500"}`}>
+                        {unlockSuccess ? "✅ UNLOCKED!" : "🔐 LOCKED"}
                     </h3>
-                    <div className="absolute inset-0 opacity-30 pointer-events-none animate-pulse">
-                        <div className="h-0.5 bg-red-500 absolute top-1/2 w-full" style={{ clipPath: "inset(0 0 0 0)" }} />
-                    </div>
+                    {!unlockSuccess && (
+                        <div className="absolute inset-0 opacity-30 pointer-events-none animate-pulse">
+                            <div className="h-0.5 bg-red-500 absolute top-1/2 w-full" style={{ clipPath: "inset(0 0 0 0)" }} />
+                        </div>
+                    )}
                 </div>
 
-                {/* Contributor */}
-                <p className="text-neutral-500 text-sm text-center">
-                    From: <span className="text-white font-medium">{photo.contributorName || "A mysterious friend"}</span>
-                </p>
-
-                {/* Question */}
-                <div className="bg-black/50 p-4 rounded-xl border border-red-900/30 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-5" style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-                    }} />
-                    <p className="text-white text-center font-medium relative z-10">
-                        {hasRiddle ? photo.riddleQuestion : (photo.memoryClue || "Can you remember this moment?")}
-                    </p>
-                </div>
-
-                {/* Answer Input */}
-                {isMCQ ? (
-                    <div className="space-y-2">
-                        {options.map((opt, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => { setAnswer(opt); }}
-                                className={`w-full p-3 rounded-lg text-left transition-all ${answer === opt
-                                        ? "bg-red-600 text-white border-red-500"
-                                        : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700"
-                                    } border`}
-                            >
-                                {String.fromCharCode(65 + idx)}. {opt}
-                            </button>
-                        ))}
-                    </div>
-                ) : (
-                    <input
-                        type="text"
-                        placeholder="Your answer..."
-                        value={answer}
-                        onChange={(e) => setAnswer(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                        className="w-full p-4 rounded-xl bg-black border border-red-900/50 text-white focus:border-red-500 focus:outline-none text-center"
-                        autoFocus
-                    />
+                {/* Show unlocked photo preview on success */}
+                {unlockSuccess && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="rounded-xl overflow-hidden shadow-lg"
+                    >
+                        <img src={photo.src} alt="Revealed memory" className="w-full h-48 object-cover" />
+                    </motion.div>
                 )}
 
-                {/* Buttons */}
-                <div className="flex gap-3">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 p-3 rounded-xl bg-neutral-800 text-neutral-400 hover:bg-neutral-700 transition font-medium"
-                    >
-                        Skip
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        className="flex-1 p-3 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold hover:from-red-700 hover:to-orange-700 transition"
-                    >
-                        {hasRiddle ? "Solve" : "Reveal"}
-                    </button>
-                </div>
+                {/* Contributor - only show during riddle, not on success */}
+                {!unlockSuccess && (
+                    <p className="text-neutral-500 text-sm text-center">
+                        From: <span className="text-white font-medium">{photo.contributorName || "A mysterious friend"}</span>
+                    </p>
+                )}
+
+                {/* Show contributor and memory text on success */}
+                {unlockSuccess && (
+                    <div className="text-center space-y-2">
+                        <p className="text-green-300 text-sm">Memory from:</p>
+                        <p className="text-white font-bold text-lg">{photo.contributorName || "A mysterious friend"}</p>
+                        {photo.memoryClue && (
+                            <p className="text-green-200/80 text-sm italic">"{photo.memoryClue}"</p>
+                        )}
+                    </div>
+                )}
+
+                {/* Question - HIDE on success */}
+                {!unlockSuccess && (
+                    <div className="bg-black/50 p-4 rounded-xl border border-red-900/30 relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-5" style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                        }} />
+                        <p className="text-white text-center font-medium relative z-10">
+                            {hasRiddle ? photo.riddleQuestion : (photo.memoryClue || "Can you remember this moment?")}
+                        </p>
+                    </div>
+                )}
+
+                {/* Answer Input - HIDE on success */}
+                {!unlockSuccess && (
+                    isMCQ ? (
+                        <div className="space-y-2">
+                            {options.map((opt, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => { setAnswer(opt); }}
+                                    className={`w-full p-3 rounded-lg text-left transition-all ${answer === opt
+                                        ? "bg-red-600 text-white border-red-500"
+                                        : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:bg-neutral-700"
+                                        } border`}
+                                >
+                                    {String.fromCharCode(65 + idx)}. {opt}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <input
+                            type="text"
+                            placeholder="Your answer..."
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                            className="w-full p-4 rounded-xl bg-black border border-red-900/50 text-white focus:border-red-500 focus:outline-none text-center"
+                            autoFocus
+                        />
+                    )
+                )}
+
+                {/* Buttons - HIDE on success */}
+                {!unlockSuccess && (
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 p-3 rounded-xl bg-neutral-800 text-neutral-400 hover:bg-neutral-700 transition font-medium"
+                        >
+                            Skip
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            className="flex-1 p-3 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold hover:from-red-700 hover:to-orange-700 transition"
+                        >
+                            {hasRiddle ? "Solve" : "Reveal"}
+                        </button>
+                    </div>
+                )}
             </motion.div>
         </motion.div>
     );
@@ -262,18 +309,21 @@ function ClearPhoto({ photo, index }: { photo: MazePhoto; index: number }) {
     );
 }
 
-export function MemoryMaze({ onAllUnlocked }: { onAllUnlocked?: () => void }) {
+export function MemoryMaze({ onAllUnlocked, eventId }: { onAllUnlocked?: () => void; eventId?: string }) {
     const [selectedPhoto, setSelectedPhoto] = useState<MazePhoto | null>(null);
     const [unlockedIds, setUnlockedIds] = useState<Set<number>>(new Set());
 
     const { data, isLoading, error } = useQuery({
-        queryKey: ["/api/user-photos"],
+        queryKey: ["/api/user-photos", eventId, "maze"],
         queryFn: async () => {
-            const res = await fetch("/api/user-photos");
+            const url = eventId ? `/api/user-photos?eventId=${eventId}` : "/api/user-photos";
+            const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch photos");
             const json = await res.json();
-            return json.photos as MazePhoto[];
+            // Only show photos that are marked for the maze (isGlitched = true)
+            return (json.photos as MazePhoto[]).filter(p => p.isGlitched === true);
         },
+        enabled: !!eventId
     });
 
     // Check if all unlocked

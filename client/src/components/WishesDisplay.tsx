@@ -21,11 +21,19 @@ interface WishResponse {
 
 interface WishesDisplayProps {
   refreshTrigger: number;
+  eventId?: string;
 }
 
-const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
+const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger, eventId }) => {
   const { data, isLoading, refetch } = useQuery<WishResponse>({
-    queryKey: ['/api/wishes'],
+    queryKey: ['/api/wishes', eventId],
+    queryFn: async () => {
+      if (!eventId) return { wishes: [] };
+      const res = await fetch(`/api/wishes?eventId=${eventId}`);
+      if (!res.ok) throw new Error("Failed to fetch wishes");
+      return res.json();
+    },
+    enabled: !!eventId,
     refetchOnWindowFocus: false,
   });
 
@@ -52,29 +60,29 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
   const getStyleProps = (styleId: string) => {
     const style = WISH_STYLES.find(s => s.id === styleId);
     if (!style) return {};
-    
+
     const props: any = {
       fontFamily: style.fontFamily,
       color: style.color
     };
-    
+
     if (style.textShadow) {
       props.textShadow = style.textShadow;
     }
-    
+
     return props;
   };
-  
+
   const getShapeStyles = (shapeId: string) => {
     const shape = NOTE_SHAPES.find(s => s.id === shapeId);
     if (!shape) return { bgColor: 'bg-yellow-200', borderRadius: '2px' };
-    
+
     const styles: any = {
       bgColor: shape.bgColor
     };
-    
+
     // Different border-radius based on shape
-    switch(shape.id) {
+    switch (shape.id) {
       case 'circle':
         styles.borderRadius = '50%';
         styles.aspectRatio = '1 / 1';
@@ -98,7 +106,7 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
       default:
         styles.borderRadius = '4px';
     }
-    
+
     return styles;
   };
 
@@ -153,7 +161,7 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
                 <div key={`wish-row-${i}-${wish.id}`} className="border-b border-blue-200"></div>
               ))}
             </div>
-            
+
             {/* Note content */}
             <div className="relative z-10 flex flex-col">
               <div className="mb-2">{wish.text}</div>
@@ -161,19 +169,19 @@ const WishesDisplay: FC<WishesDisplayProps> = ({ refreshTrigger }) => {
                 - {wish.name || "anoni hea koi"}
               </div>
             </div>
-            
+
             {/* Tape or pin effect */}
             <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-gray-100 opacity-60 rounded-sm"></div>
           </motion.div>
         ))}
-        
+
         {/* Hint text at bottom */}
         {wishes.length > 0 && (
           <div className="absolute bottom-2 right-2 text-xs text-gray-500">
             <p>Hover over notes to read them better</p>
           </div>
         )}
-        
+
         {/* Empty state */}
         {wishes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">

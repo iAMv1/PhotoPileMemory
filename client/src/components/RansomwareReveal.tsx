@@ -7,23 +7,48 @@ interface RansomwareRevealProps {
     giftContent?: React.ReactNode;
 }
 
+const TIMER_LIMITS = [60, 120, 240, 480]; // Doubling timer limits
+const RICK_ROLL_URL = "https://youtu.be/xvFZjo5PgG0?si=dsrh3n6TAC1_8xIr";
+
 export function RansomwareReveal({ onUnlock, giftContent }: RansomwareRevealProps) {
     const [userInput, setUserInput] = useState("");
     const [isUnlocking, setIsUnlocking] = useState(false);
-    const [countdown, setCountdown] = useState(59);
+    // Start with first limit (60 seconds)
+    const [timerIndex, setTimerIndex] = useState(0);
+    const [countdown, setCountdown] = useState(TIMER_LIMITS[0]);
     const [isUnlocked, setIsUnlocked] = useState(false);
+    const [timeoutCount, setTimeoutCount] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const requiredPhrase = "i am old";
 
-    // Countdown timer for dramatic effect
+    // Countdown timer - redirects to Rick Roll on timeout
     useEffect(() => {
         if (isUnlocked) return;
         const timer = setInterval(() => {
-            setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    // Timeout! Redirect to Rick Roll 😈
+                    if (navigator.vibrate) {
+                        navigator.vibrate([500, 200, 500]);
+                    }
+
+                    // Open Rick Roll in new tab
+                    window.open(RICK_ROLL_URL, "_blank");
+
+                    // Increment timeout count and double timer
+                    setTimeoutCount(tc => tc + 1);
+                    const nextIndex = Math.min(timerIndex + 1, TIMER_LIMITS.length - 1);
+                    setTimerIndex(nextIndex);
+
+                    // Reset with doubled timer
+                    return TIMER_LIMITS[nextIndex];
+                }
+                return prev - 1;
+            });
         }, 1000);
         return () => clearInterval(timer);
-    }, [isUnlocked]);
+    }, [isUnlocked, timerIndex]);
 
     // Haptic pulse during locked state
     useEffect(() => {
@@ -136,7 +161,14 @@ export function RansomwareReveal({ onUnlock, giftContent }: RansomwareRevealProp
                 {/* Countdown */}
                 <div className="bg-black/50 border-2 border-red-500 rounded-lg p-4 mb-6">
                     <p className="text-red-400 text-xs mb-2 font-mono">TIME REMAINING TO COMPLY:</p>
-                    <p className="text-red-500 text-5xl font-bold font-mono">{String(countdown).padStart(2, '0')}:00</p>
+                    <p className="text-red-500 text-5xl font-bold font-mono">
+                        {String(Math.floor(countdown / 60)).padStart(2, '0')}:{String(countdown % 60).padStart(2, '0')}
+                    </p>
+                    {timeoutCount > 0 && (
+                        <p className="text-orange-400 text-xs mt-2 font-mono animate-pulse">
+                            ⚠️ ATTEMPT {timeoutCount}/4 - Timer doubled!
+                        </p>
+                    )}
                 </div>
 
                 {/* Ransom Note */}

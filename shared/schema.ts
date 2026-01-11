@@ -1,6 +1,22 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Events table - each birthday event has its own isolated data
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  ownerEmail: text("owner_email"),
+  birthdayPersonName: text("birthday_person_name").notNull(),
+  birthdayPersonAge: integer("birthday_person_age").notNull(),
+  themeColor: text("theme_color").default("#ec4899"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+});
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -15,6 +31,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const wishes = pgTable("wishes", {
   id: serial("id").primaryKey(),
+  eventId: uuid("event_id").references(() => events.id),
   text: text("text").notNull(),
   name: text("name").default("anoni hea koi"),
   style: text("style").notNull(),
@@ -33,8 +50,10 @@ export const insertWishSchema = createInsertSchema(wishes).omit({
 
 export const timeCapsuleMessages = pgTable("time_capsule_messages", {
   id: serial("id").primaryKey(),
+  eventId: uuid("event_id").references(() => events.id),
   hour: integer("hour").notNull(),
   message: text("message").notNull(),
+  authorName: text("author_name"),
 });
 
 export const insertTimeCapsuleMessageSchema = createInsertSchema(timeCapsuleMessages).omit({
@@ -43,6 +62,7 @@ export const insertTimeCapsuleMessageSchema = createInsertSchema(timeCapsuleMess
 
 export const userPhotos = pgTable("user_photos", {
   id: serial("id").primaryKey(),
+  eventId: uuid("event_id").references(() => events.id),
   src: text("src").notNull(),
   x: integer("x").notNull(),
   y: integer("y").notNull(),
@@ -65,6 +85,21 @@ export const insertUserPhotoSchema = createInsertSchema(userPhotos).omit({
   createdAt: true,
 });
 
+export const eventConfig = pgTable("event_config", {
+  id: serial("id").primaryKey(),
+  eventId: uuid("event_id").references(() => events.id),
+  key: text("key").notNull(),
+  value: text("value").notNull(),
+});
+
+export const insertEventConfigSchema = createInsertSchema(eventConfig).omit({
+  id: true,
+});
+
+// Type exports
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Event = typeof events.$inferSelect;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -76,3 +111,7 @@ export type TimeCapsuleMessage = typeof timeCapsuleMessages.$inferSelect;
 
 export type InsertUserPhoto = z.infer<typeof insertUserPhotoSchema>;
 export type UserPhoto = typeof userPhotos.$inferSelect;
+
+export type InsertEventConfig = z.infer<typeof insertEventConfigSchema>;
+export type EventConfig = typeof eventConfig.$inferSelect;
+
