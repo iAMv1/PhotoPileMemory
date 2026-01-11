@@ -4,6 +4,8 @@
 
   <h1 align="center">Timeless Memories</h1>
 
+  <img src="./docs/images/banner.png" alt="Banner" width="100%">
+
   <p align="center">
     <strong>The ultimate digital birthday time capsule experience.</strong>
     <br />
@@ -41,9 +43,8 @@ Inspired by premium design systems like **Cluely**, the landing page features a 
 
 | Landing Page (Golden Hour) | Event Creation |
 | :---: | :---: |
-| <img src="https://cluely.com/favicon.ico" width="100" /> | <img src="https://cluely.com/favicon.ico" width="100" /> |
+| <img src="./docs/images/landing_hero.png" width="400" /> | <img src="./docs/images/event_form.png" width="400" /> |
 
-*(Note: Add your actual screenshots/GIFs here to make it truly POP!)*
 
 ---
 
