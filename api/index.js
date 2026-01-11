@@ -121,20 +121,7 @@ class DatabaseStorage {
     }
 
     async initializeDefaultTimeCapsuleMessages(eventId) {
-        const existingMessages = await this.getTimeCapsuleMessages(eventId);
-        if (existingMessages.length === 0) {
-            const defaultMessages = [
-                { hour: 8, message: "Congrats on waking up! That's harder at your age, isn't it? 💀", event_id: eventId },
-                { hour: 12, message: "Lunch time! Try not to choke on your cake, old timer! 🎂", event_id: eventId },
-                { hour: 15, message: "Afternoon check - still alive? Your back hurting yet? 👴", event_id: eventId },
-                { hour: 18, message: "Evening! Don't party too hard, you'll need your meds soon! 💊", event_id: eventId },
-                { hour: 20, message: "You are aging! Look at those wrinkles forming as we speak! 👵", event_id: eventId },
-                { hour: 21, message: "Nearly bedtime, grandpa! Remember when you could stay up late? 🌙", event_id: eventId }
-            ];
-            for (const message of defaultMessages) {
-                await this.createTimeCapsuleMessage(message);
-            }
-        }
+        // No longer initializing default messages - contributors will add their own
     }
 
     async getUserPhotos(eventId) {
@@ -222,7 +209,7 @@ export default async function handler(req, res) {
         if (url === '/api/events' && method === 'POST') {
             const eventData = req.body;
             const event = await storage.createEvent(eventData);
-            await storage.initializeDefaultTimeCapsuleMessages(event.id);
+            // No longer initializing default time capsule messages
             await storage.setEventConfig(event.id, 'birthday_person_age', String(event.birthdayPersonAge));
             await storage.setEventConfig(event.id, 'birthday_person_name', event.birthdayPersonName);
             return res.status(201).json({ event });

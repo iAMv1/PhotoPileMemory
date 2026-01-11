@@ -227,22 +227,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async initializeDefaultTimeCapsuleMessages(eventId: string) {
-    const existingMessages = await this.getTimeCapsuleMessages(eventId);
-    if (existingMessages.length === 0) {
-      const defaultMessages = [
-        { hour: 8, message: "Congrats on waking up! That's harder at your age, isn't it? 💀", event_id: eventId },
-        { hour: 12, message: "Lunch time! Try not to choke on your cake, old timer! 🍰", event_id: eventId },
-        { hour: 15, message: "Afternoon check - still alive? Your back hurting yet? 👴", event_id: eventId },
-        { hour: 18, message: "Evening! Don't party too hard, you'll need your meds soon! 💊", event_id: eventId },
-        { hour: 20, message: "You are aging! Look at those wrinkles forming as we speak! 👵", event_id: eventId },
-        { hour: 21, message: "Nearly bedtime, grandpa! Remember when you could stay up late? 🌙", event_id: eventId }
-      ];
-
-      for (const message of defaultMessages) {
-        // @ts-ignore
-        await this.createTimeCapsuleMessage(message);
-      }
-    }
+    // No longer initializing default messages - contributors will add their own
+    // This function is kept for backwards compatibility but does nothing
   }
 
   async getEventConfig(eventId: string): Promise<{ key: string; value: string }[]> {

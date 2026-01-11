@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Copy, ExternalLink, QrCode, Camera, MessageSquare, Clock, Lock, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, Copy, ExternalLink, QrCode, Camera, MessageSquare, Clock, Lock, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ContributorEntry {
@@ -12,12 +13,14 @@ interface ContributorEntry {
     galleryPhoto: boolean;
     wish: boolean;
     timeCapsule: boolean;
+    riddleAnswer?: string;
 }
 
 export default function EventDashboard() {
     const [match, params] = useRoute("/dashboard/:slug");
     const slug = params?.slug;
     const { toast } = useToast();
+    const [visibleAnswers, setVisibleAnswers] = useState<Set<string>>(new Set());
 
     const { data: event, isLoading, error } = useQuery({
         queryKey: ['/api/events', slug],
@@ -75,6 +78,9 @@ export default function EventDashboard() {
             const entry = contributors.get(name)!;
             if (p.isGlitched) {
                 entry.mazePhoto = true;
+                if (p.riddleAnswer) {
+                    entry.riddleAnswer = p.riddleAnswer;
+                }
             } else {
                 entry.galleryPhoto = true;
             }
@@ -263,6 +269,11 @@ export default function EventDashboard() {
                                                     <Clock className="w-3 h-3" /> Capsule
                                                 </div>
                                             </th>
+                                            <th className="text-center py-3 px-4 text-green-400 font-medium">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Eye className="w-3 h-3" /> Riddle Answer
+                                                </div>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -288,6 +299,33 @@ export default function EventDashboard() {
                                                     <div className="flex justify-center">
                                                         <StatusIcon filled={entry.timeCapsule} />
                                                     </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-center">
+                                                    {entry.riddleAnswer ? (
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <span className="text-green-400 font-mono text-sm">
+                                                                {visibleAnswers.has(entry.name) ? entry.riddleAnswer : '••••••'}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newSet = new Set(visibleAnswers);
+                                                                    if (newSet.has(entry.name)) {
+                                                                        newSet.delete(entry.name);
+                                                                    } else {
+                                                                        newSet.add(entry.name);
+                                                                    }
+                                                                    setVisibleAnswers(newSet);
+                                                                }}
+                                                                className="p-1 rounded hover:bg-gray-700 transition"
+                                                            >
+                                                                {visibleAnswers.has(entry.name)
+                                                                    ? <EyeOff className="w-4 h-4 text-gray-400" />
+                                                                    : <Eye className="w-4 h-4 text-gray-400" />}
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-600">—</span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

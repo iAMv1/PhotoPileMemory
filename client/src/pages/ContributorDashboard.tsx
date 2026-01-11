@@ -135,6 +135,10 @@ export default function ContributorDashboard() {
     };
 
     const handleSubmitMaze = () => {
+        if (!name.trim()) {
+            toast({ title: "Name Required", description: "Please enter your name first.", variant: "destructive" });
+            return;
+        }
         if (!mazePhoto || !riddleQuestion || !riddleAnswer) {
             toast({ title: "Riddle Required", description: "Add a question and answer to lock the photo.", variant: "destructive" });
             return;
@@ -159,6 +163,10 @@ export default function ContributorDashboard() {
     };
 
     const handleSubmitGallery = () => {
+        if (!name.trim()) {
+            toast({ title: "Name Required", description: "Please enter your name first.", variant: "destructive" });
+            return;
+        }
         if (!galleryPhoto) {
             toast({ title: "Photo Required", variant: "destructive" });
             return;
@@ -183,6 +191,10 @@ export default function ContributorDashboard() {
     };
 
     const handleSubmitWish = () => {
+        if (!name.trim()) {
+            toast({ title: "Name Required", description: "Please enter your name first.", variant: "destructive" });
+            return;
+        }
         if (!wishMessage.trim()) return;
         const styles = ["bg-yellow-200", "bg-pink-200", "bg-blue-200", "bg-green-200", "bg-purple-200"];
         wishMutation.mutate({
@@ -198,6 +210,10 @@ export default function ContributorDashboard() {
     };
 
     const handleSubmitCapsule = async () => {
+        if (!name.trim()) {
+            toast({ title: "Name Required", description: "Please enter your name first.", variant: "destructive" });
+            return;
+        }
         if (!capsuleMessage.trim() || !event) {
             toast({ title: "Message Required", variant: "destructive" });
             return;
@@ -243,13 +259,16 @@ export default function ContributorDashboard() {
                 <Card className="bg-neutral-900/80 border-neutral-700 backdrop-blur">
                     <CardContent className="pt-4">
                         <div className="space-y-2">
-                            <Label className="text-neutral-200 font-medium">Your Name (used for all contributions)</Label>
+                            <Label className="text-neutral-200 font-medium">Your Name <span className="text-red-400">*</span></Label>
                             <Input
-                                placeholder="Who are you?"
+                                placeholder="Enter your name (required)"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="bg-neutral-800 border-neutral-600 text-white placeholder:text-neutral-400"
+                                className={`bg-neutral-800 text-white placeholder:text-neutral-400 ${!name.trim() ? 'border-red-500/50' : 'border-neutral-600'}`}
                             />
+                            {!name.trim() && (
+                                <p className="text-red-400 text-xs">Name is required to submit anything</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

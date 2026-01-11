@@ -177,7 +177,7 @@ export function VoiceRecorder({ onRecordingComplete, onClear }: VoiceRecorderPro
                             type="button"
                             variant="secondary"
                             onClick={startRecording}
-                            className="w-full flex gap-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700"
+                            className="w-full flex gap-2 bg-gradient-to-r from-purple-700 to-pink-700 hover:from-purple-600 hover:to-pink-600 text-white border border-purple-500"
                         >
                             <Mic className="h-4 w-4" />
                             Record Voice Message
