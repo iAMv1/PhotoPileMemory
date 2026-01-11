@@ -266,6 +266,7 @@ export class DatabaseStorage implements IStorage {
       owner_email: insertEvent.ownerEmail || null,
       birthday_person_name: insertEvent.birthdayPersonName,
       birthday_person_age: insertEvent.birthdayPersonAge,
+      birthday_date: insertEvent.birthdayDate || null,
       theme_color: insertEvent.themeColor || '#ec4899'
     };
 
@@ -284,6 +285,7 @@ export class DatabaseStorage implements IStorage {
       ownerEmail: data.owner_email,
       birthdayPersonName: data.birthday_person_name,
       birthdayPersonAge: data.birthday_person_age,
+      birthdayDate: data.birthday_date,
       themeColor: data.theme_color,
       createdAt: data.created_at
     } as Event;
@@ -304,6 +306,7 @@ export class DatabaseStorage implements IStorage {
       ownerEmail: data.owner_email,
       birthdayPersonName: data.birthday_person_name,
       birthdayPersonAge: data.birthday_person_age,
+      birthdayDate: data.birthday_date,
       themeColor: data.theme_color,
       createdAt: data.created_at
     } as Event;
@@ -324,6 +327,7 @@ export class DatabaseStorage implements IStorage {
       ownerEmail: data.owner_email,
       birthdayPersonName: data.birthday_person_name,
       birthdayPersonAge: data.birthday_person_age,
+      birthdayDate: data.birthday_date,
       themeColor: data.theme_color,
       createdAt: data.created_at
     } as Event;

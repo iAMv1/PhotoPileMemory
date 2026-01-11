@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 export default function LandingPage() {
     const [name, setName] = useState("");
     const [age, setAge] = useState("");
+    const [birthdayDate, setBirthdayDate] = useState("");
     const [eventName, setEventName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [, setLocation] = useLocation();
@@ -30,6 +31,7 @@ export default function LandingPage() {
                     slug,
                     birthdayPersonName: name,
                     birthdayPersonAge: parseInt(age),
+                    birthdayDate: birthdayDate || null,
                     themeColor: "#ec4899"
                 }
             });
@@ -104,6 +106,16 @@ export default function LandingPage() {
                                     onChange={(e) => setAge(e.target.value)}
                                     className="bg-white/5 border-purple-500/30 text-white placeholder:text-gray-600 focus:border-pink-500"
                                     required
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-300">Birthday Date (locks access until this date)</label>
+                                <Input
+                                    type="date"
+                                    value={birthdayDate}
+                                    onChange={(e) => setBirthdayDate(e.target.value)}
+                                    className="bg-white/5 border-purple-500/30 text-white placeholder:text-gray-600 focus:border-pink-500"
                                 />
                             </div>
 

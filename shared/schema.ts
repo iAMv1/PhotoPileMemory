@@ -9,6 +9,7 @@ export const events = pgTable("events", {
   ownerEmail: text("owner_email"),
   birthdayPersonName: text("birthday_person_name").notNull(),
   birthdayPersonAge: integer("birthday_person_age").notNull(),
+  birthdayDate: text("birthday_date"), // Format: YYYY-MM-DD
   themeColor: text("theme_color").default("#ec4899"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

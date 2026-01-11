@@ -9,9 +9,9 @@ import { EnvelopeReveal } from "@/components/EnvelopeReveal";
 import { SystemNotification, useSystemOverride } from "@/components/SystemOverride";
 import Home from "@/pages/Home";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 
-type Stage = "intro" | "maze" | "ransomware" | "gift" | "envelope" | "celebration";
+type Stage = "locked" | "intro" | "maze" | "ransomware" | "gift" | "envelope" | "celebration";
 
 export default function RecipientAccess() {
     const [match, params] = useRoute("/e/:slug/access");
@@ -35,7 +35,38 @@ export default function RecipientAccess() {
     const [ageError, setAgeError] = useState("");
     const [isVerifying, setIsVerifying] = useState(false);
     const [failedAttempts, setFailedAttempts] = useState(0);
+    const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     const { notifications, triggerRandom } = useSystemOverride();
+
+    // Check if event is locked based on birthday date
+    useEffect(() => {
+        if (!event?.birthdayDate) return;
+
+        const checkLock = () => {
+            const now = new Date();
+            const birthday = new Date(event.birthdayDate + 'T00:00:00');
+            const diff = birthday.getTime() - now.getTime();
+
+            if (diff > 0) {
+                // Still locked
+                setStage("locked");
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                setCountdown({ days, hours, minutes, seconds });
+            } else {
+                // Unlocked - move to intro if coming from locked
+                if (stage === "locked") {
+                    setStage("intro");
+                }
+            }
+        };
+
+        checkLock();
+        const interval = setInterval(checkLock, 1000);
+        return () => clearInterval(interval);
+    }, [event?.birthdayDate, stage]);
 
     // Trigger notifications during maze
     useEffect(() => {
@@ -120,6 +151,79 @@ export default function RecipientAccess() {
             ))}
 
             <AnimatePresence mode="wait">
+                {/* STAGE 0: LOCKED - Countdown Timer */}
+                {stage === "locked" && (
+                    <motion.div
+                        key="locked"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden"
+                    >
+                        {/* Background */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-purple-950/50 via-black to-purple-950/30" />
+                        <div
+                            className="absolute inset-0 opacity-10"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                            }}
+                        />
+
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.3, type: "spring" }}
+                            className="relative z-10 text-center"
+                        >
+                            <motion.div
+                                animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                                className="text-8xl mb-6"
+                            >
+                                🔐
+                            </motion.div>
+
+                            <h1 className="text-4xl md:text-5xl font-bold text-purple-400 mb-4">
+                                Not yet, {event.birthdayPersonName}!
+                            </h1>
+                            <p className="text-neutral-400 mb-8 max-w-md text-lg">
+                                This surprise is locked until your special day...
+                            </p>
+
+                            {/* Countdown Timer */}
+                            <div className="flex gap-4 justify-center mb-8">
+                                <div className="bg-purple-900/50 border border-purple-500/50 rounded-xl p-4 min-w-[80px]">
+                                    <div className="text-4xl font-bold text-white">{countdown.days}</div>
+                                    <div className="text-purple-300 text-sm">Days</div>
+                                </div>
+                                <div className="bg-purple-900/50 border border-purple-500/50 rounded-xl p-4 min-w-[80px]">
+                                    <div className="text-4xl font-bold text-white">{String(countdown.hours).padStart(2, '0')}</div>
+                                    <div className="text-purple-300 text-sm">Hours</div>
+                                </div>
+                                <div className="bg-purple-900/50 border border-purple-500/50 rounded-xl p-4 min-w-[80px]">
+                                    <div className="text-4xl font-bold text-white">{String(countdown.minutes).padStart(2, '0')}</div>
+                                    <div className="text-purple-300 text-sm">Minutes</div>
+                                </div>
+                                <div className="bg-purple-900/50 border border-purple-500/50 rounded-xl p-4 min-w-[80px]">
+                                    <motion.div
+                                        key={countdown.seconds}
+                                        initial={{ scale: 1.2 }}
+                                        animate={{ scale: 1 }}
+                                        className="text-4xl font-bold text-white"
+                                    >
+                                        {String(countdown.seconds).padStart(2, '0')}
+                                    </motion.div>
+                                    <div className="text-purple-300 text-sm">Seconds</div>
+                                </div>
+                            </div>
+
+                            <p className="text-purple-600 text-sm font-mono">
+                                🎂 Unlocks on {event.birthdayDate}
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+
                 {/* STAGE 1: INTRO - Age Verification */}
                 {stage === "intro" && (
                     <motion.div
