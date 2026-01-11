@@ -34,6 +34,7 @@ export default function RecipientAccess() {
     const [age, setAge] = useState("");
     const [ageError, setAgeError] = useState("");
     const [isVerifying, setIsVerifying] = useState(false);
+    const [failedAttempts, setFailedAttempts] = useState(0);
     const { notifications, triggerRandom } = useSystemOverride();
 
     // Trigger notifications during maze
@@ -210,16 +211,22 @@ export default function RecipientAccess() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
                     >
-                        <MemoryMaze onAllUnlocked={handleMazeComplete} eventId={event?.id} />
+                        <MemoryMaze
+                            onAllUnlocked={handleMazeComplete}
+                            eventId={event?.id}
+                            onFailedAttempt={() => setFailedAttempts(prev => prev + 1)}
+                        />
 
-                        <div className="fixed bottom-4 left-4 right-4 flex justify-center pb-safe">
-                            <Button
-                                onClick={handleMazeComplete}
-                                className="bg-gradient-to-r from-red-600 via-purple-600 to-red-600 text-white font-bold px-8 py-4 rounded-full shadow-2xl shadow-red-900/50 border border-red-500/30"
-                            >
-                                Skip to Final Reveal →
-                            </Button>
-                        </div>
+                        {failedAttempts >= 3 && (
+                            <div className="fixed bottom-4 left-4 right-4 flex justify-center pb-safe">
+                                <Button
+                                    onClick={handleMazeComplete}
+                                    className="bg-gradient-to-r from-red-600 via-purple-600 to-red-600 text-white font-bold px-8 py-4 rounded-full shadow-2xl shadow-red-900/50 border border-red-500/30"
+                                >
+                                    Skip to Final Reveal →
+                                </Button>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 

@@ -20,9 +20,10 @@ interface UnlockModalProps {
     photo: MazePhoto;
     onClose: () => void;
     onUnlock: () => void;
+    onFailedAttempt?: () => void;
 }
 
-function UnlockModal({ photo, onClose, onUnlock }: UnlockModalProps) {
+function UnlockModal({ photo, onClose, onUnlock, onFailedAttempt }: UnlockModalProps) {
     const [answer, setAnswer] = useState("");
     const [shake, setShake] = useState(false);
     const hasRiddle = photo.riddleQuestion && photo.riddleAnswer;
@@ -49,6 +50,7 @@ function UnlockModal({ photo, onClose, onUnlock }: UnlockModalProps) {
             setShake(true);
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             setTimeout(() => setShake(false), 500);
+            onFailedAttempt?.();
         }
     };
 
@@ -309,7 +311,7 @@ function ClearPhoto({ photo, index }: { photo: MazePhoto; index: number }) {
     );
 }
 
-export function MemoryMaze({ onAllUnlocked, eventId }: { onAllUnlocked?: () => void; eventId?: string }) {
+export function MemoryMaze({ onAllUnlocked, eventId, onFailedAttempt }: { onAllUnlocked?: () => void; eventId?: string; onFailedAttempt?: () => void }) {
     const [selectedPhoto, setSelectedPhoto] = useState<MazePhoto | null>(null);
     const [unlockedIds, setUnlockedIds] = useState<Set<number>>(new Set());
 
@@ -437,6 +439,7 @@ export function MemoryMaze({ onAllUnlocked, eventId }: { onAllUnlocked?: () => v
                         photo={selectedPhoto}
                         onClose={() => setSelectedPhoto(null)}
                         onUnlock={() => handleUnlock(selectedPhoto.id)}
+                        onFailedAttempt={onFailedAttempt}
                     />
                 )}
             </AnimatePresence>
