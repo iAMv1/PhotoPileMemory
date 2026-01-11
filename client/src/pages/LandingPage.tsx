@@ -264,14 +264,14 @@ export default function LandingPage() {
                             </div>
                         </RevealOnScroll>
 
-                        {/* Bento Grid */}
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {/* Large Feature Card */}
+                        {/* Bento Grid: 3 Columns, 2 Rows */}
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {/* Column 1: Memory Maze (Spans 2 rows) */}
                             <RevealOnScroll delay={0.1}>
                                 <motion.div
-                                    whileHover={{ scale: 1.02, y: -5 }}
+                                    whileHover={{ scale: 1.01, y: -5 }}
                                     transition={{ type: "spring", stiffness: 300 }}
-                                    className="lg:col-span-2 lg:row-span-2 p-8 rounded-3xl bg-gradient-to-br from-purple-900/40 to-pink-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group"
+                                    className="lg:row-span-2 h-full p-8 rounded-3xl bg-gradient-to-br from-purple-900/40 to-pink-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group flex flex-col justify-center min-h-[400px]"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10">
@@ -291,12 +291,12 @@ export default function LandingPage() {
                                 </motion.div>
                             </RevealOnScroll>
 
-                            {/* Voice Notes Card */}
+                            {/* Column 2, Row 1: Voice Notes */}
                             <RevealOnScroll delay={0.2}>
                                 <motion.div
-                                    whileHover={{ scale: 1.02, y: -5 }}
+                                    whileHover={{ scale: 1.01, y: -5 }}
                                     transition={{ type: "spring", stiffness: 300 }}
-                                    className="p-6 rounded-3xl bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group"
+                                    className="h-full p-8 rounded-3xl bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group flex flex-col justify-center min-h-[220px]"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10">
@@ -311,12 +311,12 @@ export default function LandingPage() {
                                 </motion.div>
                             </RevealOnScroll>
 
-                            {/* Time Capsule Card */}
+                            {/* Column 3, Row 1: Time Capsules */}
                             <RevealOnScroll delay={0.3}>
                                 <motion.div
-                                    whileHover={{ scale: 1.02, y: -5 }}
+                                    whileHover={{ scale: 1.01, y: -5 }}
                                     transition={{ type: "spring", stiffness: 300 }}
-                                    className="p-6 rounded-3xl bg-gradient-to-br from-orange-900/40 to-amber-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group"
+                                    className="h-full p-8 rounded-3xl bg-gradient-to-br from-orange-900/40 to-amber-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group flex flex-col justify-center min-h-[220px]"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10">
@@ -331,12 +331,12 @@ export default function LandingPage() {
                                 </motion.div>
                             </RevealOnScroll>
 
-                            {/* Lock Until Day Card */}
+                            {/* Column 2, Row 2: Countdown Lock (Below Voice Notes) */}
                             <RevealOnScroll delay={0.4}>
                                 <motion.div
-                                    whileHover={{ scale: 1.02, y: -5 }}
+                                    whileHover={{ scale: 1.01, y: -5 }}
                                     transition={{ type: "spring", stiffness: 300 }}
-                                    className="p-6 rounded-3xl bg-gradient-to-br from-rose-900/40 to-pink-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group"
+                                    className="h-full p-8 rounded-3xl bg-gradient-to-br from-rose-900/40 to-pink-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group flex flex-col justify-center min-h-[220px]"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10">
@@ -351,12 +351,12 @@ export default function LandingPage() {
                                 </motion.div>
                             </RevealOnScroll>
 
-                            {/* Collaborate Card */}
+                            {/* Column 3, Row 2: Invite Friends (Below Time Capsules) */}
                             <RevealOnScroll delay={0.5}>
                                 <motion.div
-                                    whileHover={{ scale: 1.02, y: -5 }}
+                                    whileHover={{ scale: 1.01, y: -5 }}
                                     transition={{ type: "spring", stiffness: 300 }}
-                                    className="p-6 rounded-3xl bg-gradient-to-br from-emerald-900/40 to-teal-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group"
+                                    className="h-full p-8 rounded-3xl bg-gradient-to-br from-emerald-900/40 to-teal-900/40 border border-white/10 backdrop-blur-xl relative overflow-hidden group flex flex-col justify-center min-h-[220px]"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     <div className="relative z-10">
