@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Clock, Camera, MessageCircle, Lock, ArrowRight, Heart, Gift, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+
+// Lazy load 3D scene for better performance
+const HeroScene3D = lazy(() => import("@/components/HeroScene3D").then(module => ({ default: module.HeroScene3D })));
 
 // Scroll-triggered reveal animation component
 function RevealOnScroll({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -160,12 +163,19 @@ export default function LandingPage() {
                 </motion.nav>
 
                 {/* Hero Section */}
-                <section ref={heroRef} className="min-h-screen flex flex-col items-center justify-center px-6 pt-20">
+                <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 overflow-hidden">
+                    {/* 3D Background Scene */}
+                    <div className="absolute inset-0 z-0">
+                        <Suspense fallback={null}>
+                            <HeroScene3D />
+                        </Suspense>
+                    </div>
+
                     <motion.div
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1, ease: [0.21, 0.47, 0.32, 0.98] }}
-                        className="text-center max-w-4xl mx-auto"
+                        className="text-center max-w-4xl mx-auto relative z-10"
                     >
                         {/* Badge */}
                         <motion.div
